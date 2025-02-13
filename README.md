@@ -14,13 +14,15 @@ npm install @yodl/yapp-sdk
 import { YappSDK } from '@yodl/yapp-sdk';
 
 // Initialize the SDK with your domain and public key
-const sdk = new YappSDK('https://your-app-domain.com', {
-  publicKey: 'YOUR_PUBLIC_KEY_PEM',
+const sdk = new YappSDK({
+  ensName: "my-yapp.eth"
+  // origin: "https://my-test-env.dev",
+  // publicKey: "my-test-public-key" // ES256 PEM encoded public key
 });
 
 // Example: Validate a JWT token
 try {
-  const decodedData = await sdk.validateToken('your.jwt.token');
+  const decodedData = await sdk.verify(url.searchParams.get('jwt'));
   console.log('Token payload:', decodedData);
 } catch (error) {
   console.error('Token validation failed:', error);
@@ -39,23 +41,21 @@ const urlParams = new URLSearchParams(window.location.search);
 const jwtToken = urlParams.get('token');
 
 // Validate JWT token securely
-const payload = await sdk.validateToken(jwtToken);
+const payload = await sdk.verify(jwtToken);
 
 // The payload contains user information as defined in JWTPayload:
-console.log(payload.a); // User's Ethereum address
-console.log(payload.p); // User's primary ENS name
-console.log(payload.e); // User's community ENS name
-console.log(payload.c); // Community ENS name
-console.log(payload.y); // Yapp application ENS name
+console.log(payload.sub); // User's Ethereum address
+console.log(payload.ens); // User's primary ENS name
+console.log(payload.iss); // Community ENS name
+console.log(payload.aud); // Yapp application ENS name
 ```
 
 The JWT payload contains essential user information:
 
-- `a`: User's Ethereum wallet address (e.g., "0x742d35Cc6634C0532925a3b844Bc454e4438f44e") 👛
-- `p`: User's primary ENS name (e.g., "user.eth") 🏷️
-- `e`: User's community ENS name (e.g., "user.community.eth") 👥
-- `c`: Community ENS name (e.g., "community.eth") 🌐
-- `y`: Yapp application ENS name (e.g., "app.yapp.eth") 📱
+- `sub`: User's Ethereum wallet address (e.g., "0x742d35Cc6634C0532925a3b844Bc454e4438f44e") 👛
+- `ens`: User's primary ENS name (e.g., "user.eth") 🏷️
+- `iss`: User's community ENS name (e.g., "user.community.eth") 👥
+- `aud`: MUST match your ensName in the YappSDK config. 
 
 ### 💸 Payment Requests
 

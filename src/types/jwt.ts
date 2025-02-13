@@ -27,35 +27,32 @@ export interface JWTPayload extends JoseJWTPayload {
    * This is the primary identifier for the user in the Ethereum ecosystem.
    * @example "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
    */
-  a?: string;
+  sub: string;
+
 
   /**
-   * The user's primary ENS (Ethereum Name Service) name.
+   * The user's community ENS name, if none given
    * This is the main human-readable identifier for the user.
    * @example "vitalik.eth"
    */
-  p?: string;
-
-  /**
-   * The user's community-specific ENS name.
-   * This represents a user's identity within a specific community context.
-   * @example "vitalik.community.eth"
-   */
-  e?: string;
+  ens: string | null;
 
   /**
    * The community's ENS name.
    * Identifies the specific community context for this token.
    * @example "community.eth"
    */
-  c?: string;
+  iss: string;
+
 
   /**
    * The YAPP application's ENS name.
    * Identifies which YAPP application issued or is associated with this token.
    * @example "app.yapp.eth"
    */
-  y?: string;
+  aud: string;
+
+  exp: number; // expiry
 
   /**
    * Additional custom claims can be included in the payload.

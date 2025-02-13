@@ -1,3 +1,4 @@
+import * as jose from 'jose';
 import { PaymentConfig } from '../types/config';
 import { CloseMessage, PaymentMessage } from '../types/messages';
 
