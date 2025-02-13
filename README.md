@@ -15,7 +15,7 @@ import { YappSDK } from '@yodl/yapp-sdk';
 
 // Initialize the SDK with your domain and public key
 const sdk = new YappSDK({
-  ensName: "my-yapp.eth"
+  ensName: 'my-yapp.eth',
   // origin: "https://my-test-env.dev",
   // publicKey: "my-test-public-key" // ES256 PEM encoded public key
 });
@@ -55,7 +55,7 @@ The JWT payload contains essential user information:
 - `sub`: User's Ethereum wallet address (e.g., "0x742d35Cc6634C0532925a3b844Bc454e4438f44e") 👛
 - `ens`: User's primary ENS name (e.g., "user.eth") 🏷️
 - `iss`: User's community ENS name (e.g., "user.community.eth") 👥
-- `aud`: MUST match your ensName in the YappSDK config. 
+- `aud`: MUST match your ensName in the YappSDK config.
 
 ### 💸 Payment Requests
 

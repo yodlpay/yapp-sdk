@@ -29,7 +29,6 @@ export interface JWTPayload extends JoseJWTPayload {
    */
   sub: string;
 
-
   /**
    * The user's community ENS name, if none given
    * This is the main human-readable identifier for the user.
@@ -43,7 +42,6 @@ export interface JWTPayload extends JoseJWTPayload {
    * @example "community.eth"
    */
   iss: string;
-
 
   /**
    * The YAPP application's ENS name.

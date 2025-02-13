@@ -1,15 +1,19 @@
 import * as jose from 'jose';
-import { PaymentConfig, YappSDKConfig, YappSDKConfigPublic } from './types/config';
+import {
+  PaymentConfig,
+  YappSDKConfig,
+  YappSDKConfigPublic,
+} from './types/config';
 import { JWTPayload } from './types/jwt';
 import { MessageManager } from './utils/MessageManager';
 import { isInIframe } from './utils/isInIframe';
 
-export const YODL_PUBLIC_KEY = ``
+export const YODL_PUBLIC_KEY = ``;
 
 /**
  * Error thrown when JWT audience validation fails.
  * This typically occurs when the JWT's 'aud' claim doesn't match the expected value.
- * 
+ *
  */
 export class JWTAudError extends Error {
   constructor(message: string = 'JWT issued for a different yapp') {
@@ -17,7 +21,6 @@ export class JWTAudError extends Error {
     this.name = 'JWTAudError';
   }
 }
-
 
 /**
  * YappSDK - Main SDK class for handling security and authentication.
@@ -60,7 +63,7 @@ class YappSDK {
    * @throws {Error} If the public key is invalid or initialization fails
    */
   constructor(config: YappSDKConfigPublic) {
-    if (!config.ensName || config.ensName == "") {
+    if (!config.ensName || config.ensName == '') {
       // add better checks for valid ENS names.
       throw new Error('ensName is required');
     }
@@ -70,7 +73,6 @@ class YappSDK {
       ensName: config.ensName,
       publicKey: config.publicKey || YODL_PUBLIC_KEY,
     } as YappSDKConfig;
-
 
     this.initialize(this.config);
   }
@@ -82,7 +84,6 @@ class YappSDK {
    * @private
    */
   private async initialize(config: YappSDKConfig) {
-
     this.messaging = new MessageManager(config.ensName);
   }
 
@@ -94,7 +95,7 @@ class YappSDK {
   private ensureInitialized(): void {
     if (!this.messaging) {
       throw new Error(
-        'SDK not initialized. Please wait for initialization to complete.'
+        'SDK not initialized. Please wait for initialization to complete.',
       );
     }
   }

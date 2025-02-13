@@ -9,7 +9,6 @@ export interface YappSDKConfigPublic {
   publicKey?: string;
 }
 
-
 /**
  * Configuration options for the YappSDK
  *
