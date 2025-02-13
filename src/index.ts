@@ -1,5 +1,5 @@
 import * as jose from 'jose';
-import { PaymentConfig, YappSDKConfig } from './types/config';
+import { PaymentConfig, YappSDKConfig, YappSDKConfigPublic } from './types/config';
 import { JWTPayload } from './types/jwt';
 import { MessageManager } from './utils/MessageManager';
 import { isInIframe } from './utils/isInIframe';
@@ -59,12 +59,18 @@ class YappSDK {
    *
    * @throws {Error} If the public key is invalid or initialization fails
    */
-  constructor(config: YappSDKConfig) {
+  constructor(config: YappSDKConfigPublic) {
+    if (!config.ensName || config.ensName == "") {
+      // add better checks for valid ENS names.
+      throw new Error('ensName is required');
+    }
+
     this.config = {
       origin: config.origin || 'https://yodl.me',
       ensName: config.ensName,
       publicKey: config.publicKey || YODL_PUBLIC_KEY,
-    };
+    } as YappSDKConfig;
+
 
     this.initialize(this.config);
   }

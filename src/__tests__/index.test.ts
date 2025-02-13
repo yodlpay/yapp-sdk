@@ -43,6 +43,14 @@ describe('initializing SDK', () => {
     });
   });
 
+  it('throws error, without ensName', async () => {
+    expect(new YappSDK({ ensName: "foobar.eth" })).toBeDefined();
+  });
+
+  it('throws error, without ensName', async () => {
+    // @ts-ignore
+    await expect(() => new YappSDK({})).toThrow("ensName is required");
+  });
   // todo test that defaults are applied.
 })
 
