@@ -1,4 +1,5 @@
 import * as jose from 'jose';
+import { YODL_PUBLIC_KEY } from './constants/keys';
 import {
   PaymentConfig,
   YappSDKConfig,
@@ -7,8 +8,6 @@ import {
 import { JWTPayload } from './types/jwt';
 import { MessageManager } from './utils/MessageManager';
 import { isInIframe } from './utils/isInIframe';
-
-export const YODL_PUBLIC_KEY = ``;
 
 /**
  * Error thrown when JWT audience validation fails.
