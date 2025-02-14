@@ -1,3 +1,4 @@
+import * as jose from 'jose';
 import { PaymentConfig } from '../types/config';
 import { CloseMessage, PaymentMessage } from '../types/messages';
 
@@ -97,11 +98,11 @@ export class MessageManager {
    */
   private sendMessageToParent(
     message: CloseMessage | PaymentMessage,
-    targetOrigin: string
+    targetOrigin: string,
   ): void {
     if (!this.isOriginAllowed(targetOrigin)) {
       throw new Error(
-        `Origin "${targetOrigin}" is not allowed to receive messages`
+        `Origin "${targetOrigin}" is not allowed to receive messages`,
       );
     }
 

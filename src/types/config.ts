@@ -1,5 +1,14 @@
 import { FiatCurrency } from './currency';
 
+export interface YappSDKConfigPublic {
+  /** URL of super app */
+  origin?: string;
+  /** The ENS name of the yapp */
+  ensName: string;
+  /** The public key in PEM format used for encryption */
+  publicKey?: string;
+}
+
 /**
  * Configuration options for the YappSDK
  *
@@ -11,6 +20,10 @@ import { FiatCurrency } from './currency';
  * ```
  */
 export interface YappSDKConfig {
+  /** URL of super app */
+  origin: string;
+  /** The ENS name of the yapp */
+  ensName: string;
   /** The public key in PEM format used for encryption */
   publicKey: string;
 }

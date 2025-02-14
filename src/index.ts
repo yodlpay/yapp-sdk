@@ -1,8 +1,26 @@
-import { PaymentConfig, YappSDKConfig } from './types/config';
+import * as jose from 'jose';
+import {
+  PaymentConfig,
+  YappSDKConfig,
+  YappSDKConfigPublic,
+} from './types/config';
 import { JWTPayload } from './types/jwt';
 import { MessageManager } from './utils/MessageManager';
-import { SecurityManager } from './utils/SecurityManager';
 import { isInIframe } from './utils/isInIframe';
+
+export const YODL_PUBLIC_KEY = ``;
+
+/**
+ * Error thrown when JWT audience validation fails.
+ * This typically occurs when the JWT's 'aud' claim doesn't match the expected value.
+ *
+ */
+export class JWTAudError extends Error {
+  constructor(message: string = 'JWT issued for a different yapp') {
+    super(message);
+    this.name = 'JWTAudError';
+  }
+}
 
 /**
  * YappSDK - Main SDK class for handling security and authentication.
@@ -34,31 +52,39 @@ import { isInIframe } from './utils/isInIframe';
  */
 class YappSDK {
   /** Instance of SecurityManager handling encryption and origin validation */
-  private security!: SecurityManager;
   private messaging!: MessageManager;
+  private config!: YappSDKConfig;
 
   /**
    * Creates a new instance of YappSDK.
    *
-   * @param address - The allowed origin domain that can interact with the SDK
    * @param config - Configuration options for the SDK
    *
    * @throws {Error} If the public key is invalid or initialization fails
    */
-  constructor(address: string, config: YappSDKConfig) {
-    this.initialize(address, config);
+  constructor(config: YappSDKConfigPublic) {
+    if (!config.ensName || config.ensName == '') {
+      // add better checks for valid ENS names.
+      throw new Error('ensName is required');
+    }
+
+    this.config = {
+      origin: config.origin || 'https://yodl.me',
+      ensName: config.ensName,
+      publicKey: config.publicKey || YODL_PUBLIC_KEY,
+    } as YappSDKConfig;
+
+    this.initialize(this.config);
   }
 
   /**
    * Initializes the SecurityManager with the provided credentials.
    *
-   * @param address - The allowed origin
    * @param config - Configuration options
    * @private
    */
-  private async initialize(address: string, config: YappSDKConfig) {
-    this.security = await SecurityManager.create(config.publicKey);
-    this.messaging = new MessageManager(address);
+  private async initialize(config: YappSDKConfig) {
+    this.messaging = new MessageManager(config.ensName);
   }
 
   /**
@@ -67,9 +93,9 @@ class YappSDK {
    * @throws {Error} If the SDK is not initialized
    */
   private ensureInitialized(): void {
-    if (!this.security || !this.messaging) {
+    if (!this.messaging) {
       throw new Error(
-        'SDK not initialized. Please wait for initialization to complete.'
+        'SDK not initialized. Please wait for initialization to complete.',
       );
     }
   }
@@ -81,9 +107,18 @@ class YappSDK {
    * @returns The decoded payload data if the token is valid
    * @throws {Error} If the token is invalid or verification fails
    */
-  public async validateToken(token: string): Promise<JWTPayload> {
-    this.ensureInitialized();
-    return this.security.verifyAndDecodeToken(token);
+  public async verify(jwt: string): Promise<JWTPayload | undefined> {
+    const publicKey = await jose.importSPKI(this.config.publicKey, 'ES256');
+
+    const { payload } = await jose.jwtVerify<JWTPayload>(jwt, publicKey, {
+      algorithms: ['ES256'],
+    });
+
+    if (payload.aud !== this.config.ensName) {
+      throw new JWTAudError(`JWT issued for different yapp (${payload.aud})`);
+    }
+
+    return payload;
   }
 
   /**
