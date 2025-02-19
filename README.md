@@ -11,7 +11,7 @@ npm install @yodl/yapp-sdk
 ## ⚡ Quick Start
 
 ```typescript
-import { YappSDK } from '@yodl/yapp-sdk';
+import YappSDK from '@yodl/yapp-sdk';
 
 // Initialize the SDK with your domain and public key
 const sdk = new YappSDK({
