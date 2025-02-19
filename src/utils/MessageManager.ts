@@ -111,7 +111,6 @@ export class MessageManager {
       );
     }
 
-
     if (window.parent === window) {
       throw new Error('Cannot send message: SDK is not running in an iframe');
     }

@@ -84,7 +84,10 @@ class YappSDK {
    * @private
    */
   private async initialize(config: YappSDKConfig) {
-    this.messaging = new MessageManager(config.origin, config.disableOriginValidation);
+    this.messaging = new MessageManager(
+      config.origin,
+      config.disableOriginValidation,
+    );
   }
 
   /**
