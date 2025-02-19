@@ -71,7 +71,6 @@ class YappSDK {
       origin: config.origin || 'https://yodl.me',
       ensName: config.ensName,
       publicKey: config.publicKey || YODL_PUBLIC_KEY,
-      disableOriginValidation: config.disableOriginValidation || false,
     } as YappSDKConfig;
 
     this.initialize(this.config);
@@ -84,10 +83,7 @@ class YappSDK {
    * @private
    */
   private async initialize(config: YappSDKConfig) {
-    this.messaging = new MessageManager(
-      config.origin,
-      config.disableOriginValidation,
-    );
+    this.messaging = new MessageManager(config.origin);
   }
 
   /**

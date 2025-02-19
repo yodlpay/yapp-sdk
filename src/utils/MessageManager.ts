@@ -21,11 +21,9 @@ import { CloseMessage, PaymentMessage } from '../types/messages';
  */
 export class MessageManager {
   private readonly allowedOrigin: string;
-  private readonly disableOriginValidation: boolean;
 
-  constructor(allowedOrigin: string, disableOriginValidation: boolean) {
+  constructor(allowedOrigin: string) {
     this.allowedOrigin = allowedOrigin;
-    this.disableOriginValidation = disableOriginValidation;
   }
 
   /**
@@ -39,10 +37,6 @@ export class MessageManager {
    * ```
    */
   private isOriginAllowed(origin: string): boolean {
-    if (this.disableOriginValidation) {
-      return true;
-    }
-
     try {
       const allowedUrl = new URL(this.allowedOrigin);
       const testUrl = new URL(origin);

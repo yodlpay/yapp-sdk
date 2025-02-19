@@ -7,8 +7,6 @@ export interface YappSDKConfigPublic {
   ensName: string;
   /** The public key in PEM format used for encryption */
   publicKey?: string;
-  /** Disable origin validation */
-  disableOriginValidation?: boolean;
 }
 
 /**
@@ -28,8 +26,6 @@ export interface YappSDKConfig {
   ensName: string;
   /** The public key in PEM format used for encryption */
   publicKey: string;
-  /** Disable origin */
-  disableOriginValidation: boolean;
 }
 
 /**
