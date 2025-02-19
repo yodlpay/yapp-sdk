@@ -1,4 +1,3 @@
-import * as jose from 'jose';
 import { PaymentConfig } from '../types/config';
 import { CloseMessage, PaymentMessage } from '../types/messages';
 
@@ -22,9 +21,11 @@ import { CloseMessage, PaymentMessage } from '../types/messages';
  */
 export class MessageManager {
   private readonly allowedOrigin: string;
+  private readonly disableOriginValidation: boolean;
 
-  constructor(allowedOrigin: string) {
+  constructor(allowedOrigin: string, disableOriginValidation: boolean) {
     this.allowedOrigin = allowedOrigin;
+    this.disableOriginValidation = disableOriginValidation;
   }
 
   /**
@@ -38,6 +39,10 @@ export class MessageManager {
    * ```
    */
   private isOriginAllowed(origin: string): boolean {
+    if (this.disableOriginValidation) {
+      return true;
+    }
+
     try {
       const allowedUrl = new URL(this.allowedOrigin);
       const testUrl = new URL(origin);
@@ -102,9 +107,10 @@ export class MessageManager {
   ): void {
     if (!this.isOriginAllowed(targetOrigin)) {
       throw new Error(
-        `Origin "${targetOrigin}" is not allowed to receive messages`,
+        `Invalid origin "${targetOrigin}". Expected "${this.allowedOrigin}".`,
       );
     }
+
 
     if (window.parent === window) {
       throw new Error('Cannot send message: SDK is not running in an iframe');
