@@ -5,13 +5,13 @@ The official SDK for building Yodl Yapps. This SDK provides a secure way to inte
 ## 📦 Installation
 
 ```bash
-npm install @yodl/yapp-sdk
+npm install @yodlpay/yapp-sdk
 ```
 
 ## ⚡ Quick Start
 
 ```typescript
-import YappSDK from '@yodl/yapp-sdk';
+import YappSDK from '@yodlpay/yapp-sdk';
 
 // Initialize the SDK with your domain and public key
 const sdk = new YappSDK({
@@ -87,7 +87,7 @@ The memo data is stored on-chain with the transaction, allowing you to verify an
 ### 🔍 Iframe Detection
 
 ```typescript
-import { isInIframe } from '@yodl/yapp-sdk';
+import { isInIframe } from '@yodlpay/yapp-sdk';
 
 // Check if your code is running inside an iframe
 if (isInIframe()) {
