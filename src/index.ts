@@ -83,7 +83,7 @@ class YappSDK {
    * @private
    */
   private async initialize(config: YappSDKConfig) {
-    this.messaging = new MessageManager(config.ensName);
+    this.messaging = new MessageManager(config.origin);
   }
 
   /**

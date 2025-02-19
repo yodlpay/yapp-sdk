@@ -1,4 +1,3 @@
-import * as jose from 'jose';
 import { PaymentConfig } from '../types/config';
 import { CloseMessage, PaymentMessage } from '../types/messages';
 
@@ -102,7 +101,7 @@ export class MessageManager {
   ): void {
     if (!this.isOriginAllowed(targetOrigin)) {
       throw new Error(
-        `Origin "${targetOrigin}" is not allowed to receive messages`,
+        `Invalid origin "${targetOrigin}". Expected "${this.allowedOrigin}".`,
       );
     }
 
