@@ -22,31 +22,45 @@ export class JWTAudError extends Error {
 }
 
 /**
- * YappSDK - Main SDK class for handling security and authentication.
+ * Payment response containing transaction details
+ */
+export interface PaymentResponse {
+  txHash: string;
+  chainId: number;
+}
+
+/**
+ * YappSDK - Main SDK class for handling payments and authentication.
  *
  * This class provides the core functionality for the Yapp SDK, managing security,
- * origin validation, and communication with the parent application.
+ * origin validation, JWT verification, and payment requests.
  *
  * @example
  * Basic usage:
  * ```typescript
- * const sdk = new YappSDK('https://allowed-domain.com', {
- *   publicKey: publicKeyPem
+ * const sdk = new YappSDK({
+ *   origin: 'https://allowed-domain.com',
+ *   ensName: 'myapp.eth',
+ *   publicKey: publicKeyPem // Optional, defaults to YODL_PUBLIC_KEY
  * });
  *
  * // Validate a JWT token
- * const decodedData = await sdk.validateToken(jwtToken);
+ * const decodedData = await sdk.verify(jwtToken);
  * ```
  *
  * @example
- * Sending messages:
+ * Payment request:
  * ```typescript
- * // Request a payment
- * sdk.requestPayment('recipient@example.com', {
- *   amount: 50,
- *   currency: 'USD',
- *   memo: 'Service fee'
- * });
+ * try {
+ *   const response = await sdk.requestPayment('0x123...', {
+ *     amount: 50,
+ *     currency: FiatCurrency.USD,
+ *     memo: 'Service fee'
+ *   });
+ *   console.log('Transaction hash:', response.txHash);
+ * } catch (error) {
+ *   console.error('Payment failed:', error);
+ * }
  * ```
  */
 class YappSDK {
@@ -58,8 +72,10 @@ class YappSDK {
    * Creates a new instance of YappSDK.
    *
    * @param config - Configuration options for the SDK
-   *
-   * @throws {Error} If the public key is invalid or initialization fails
+   * @param config.origin - The allowed origin domain (defaults to 'https://yodl.me')
+   * @param config.ensName - The ENS name of your application
+   * @param config.publicKey - Optional public key for JWT verification (defaults to YODL_PUBLIC_KEY)
+   * @throws {Error} If ensName is missing or invalid
    */
   constructor(config: YappSDKConfigPublic) {
     if (!config.ensName || config.ensName == '') {
@@ -121,15 +137,39 @@ class YappSDK {
   }
 
   /**
-   * Sends a payment request to the parent window.
+   * Sends a payment request to the parent window and waits for confirmation.
    *
    * @param address - The address to send the payment to
    * @param config - Payment configuration options
-   * @throws {Error} If the SDK is not initialized or the origin is not allowed
+   * @returns Promise that resolves with payment response when successful
+   * @throws {Error} If the SDK is not initialized, payment is cancelled, or times out
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const response = await sdk.requestPayment('0x742d35Cc6634C0532925a3b844Bc454e4438f44e', {
+   *     amount: 50,
+   *     currency: FiatCurrency.USD,
+   *     memo: 'Service fee'
+   *   });
+   *
+   *   // Handle successful payment
+   *   console.log('Transaction completed on chain:', response.chainId);
+   *   console.log('Transaction hash:', response.txHash);
+   * } catch (error) {
+   *   if (error.message === 'Payment was cancelled') {
+   *     // Handle user cancellation
+   *     console.log('User cancelled the payment');
+   *   } else {
+   *     // Handle other errors (timeout, network issues, etc)
+   *     console.error('Payment failed:', error.message);
+   *   }
+   * }
+   * ```
    */
-  public requestPayment(address: string, config: PaymentConfig): void {
+  public async requestPayment(address: string, config: PaymentConfig): Promise<PaymentResponse> {
     this.ensureInitialized();
-    this.messaging.sendPaymentRequest(address, config);
+    return await this.messaging.sendPaymentRequest(address, config);
   }
 
   /**

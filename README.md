@@ -40,14 +40,22 @@ When a user connects to your Yapp, the JWT token is automatically provided as a 
 const urlParams = new URLSearchParams(window.location.search);
 const jwtToken = urlParams.get('token');
 
-// Validate JWT token securely
-const payload = await sdk.verify(jwtToken);
+try {
+  // Validate JWT token securely
+  const payload = await sdk.verify(jwtToken);
 
-// The payload contains user information as defined in JWTPayload:
-console.log(payload.sub); // User's Ethereum address
-console.log(payload.ens); // User's primary ENS name
-console.log(payload.iss); // Community ENS name
-console.log(payload.aud); // Yapp application ENS name
+  // The payload contains user information:
+  console.log(payload.sub);  // User's Ethereum address
+  console.log(payload.ens);  // User's primary ENS name
+  console.log(payload.iss);  // Community ENS name
+  console.log(payload.aud);  // Yapp application ENS name (must match your ensName)
+} catch (error) {
+  if (error.name === 'JWTAudError') {
+    console.error('Token was issued for a different Yapp');
+  } else {
+    console.error('Token validation failed:', error);
+  }
+}
 ```
 
 The JWT payload contains essential user information:
@@ -60,21 +68,32 @@ The JWT payload contains essential user information:
 ### 💸 Payment Requests
 
 ```typescript
-// Request a payment
-const paymentConfig = {
-  amount: 100,
-  currency: 'USD',
-  memo: 'order_123', // Can be any identifier (max 32 bytes) for your business logic
-};
+try {
+  // Request a payment
+  const response = await sdk.requestPayment('0x742d35Cc6634C0532925a3b844Bc454e4438f44e', {
+    amount: 100,
+    currency: 'USD',
+    memo: 'order_123', // Optional identifier (max 32 bytes) for your business logic
+  });
 
-// Example with different memo use cases
+  console.log('Transaction hash:', response.txHash);
+  console.log('Chain ID:', response.chainId);
+} catch (error) {
+  if (error.message === 'Payment was cancelled') {
+    console.log('User cancelled the payment');
+  } else if (error.message === 'Payment request timed out') {
+    console.log('Payment timed out after 5 minutes');
+  } else {
+    console.error('Payment failed:', error);
+  }
+}
+
+// Example use cases for memo field:
 const examples = [
   { amount: 50, currency: 'USD', memo: 'subscription_id_456' }, // Track subscriptions
-  { amount: 75, currency: 'EUR', memo: 'invoice_789' }, // Link to invoices
-  { amount: 120, currency: 'THB', memo: 'product_xyz_123' }, // Product purchases
+  { amount: 75, currency: 'EUR', memo: 'invoice_789' },        // Link to invoices
+  { amount: 120, currency: 'THB', memo: 'product_xyz_123' },   // Product purchases
 ];
-
-sdk.requestPayment('recipient-address', paymentConfig);
 ```
 
 The `memo` field in payment requests serves two purposes:
@@ -106,15 +125,22 @@ This utility helps you detect whether your Yapp is running inside an iframe, whi
 ### 🚪 Closing the Application
 
 ```typescript
-// Close the Yapp securely
-sdk.close('https://parent-origin.com');
+try {
+  // Close the Yapp securely
+  sdk.close('https://parent-origin.com');
+} catch (error) {
+  console.error('Failed to close:', error);
+  // Handle invalid origin or not in iframe errors
+}
 ```
 
 ## 🔒 Security Considerations
 
-- 🛡️ Always validate the origin of messages using the SDK's built-in security features
-- 🔑 The public key can be fetched from https://yodl.me/assets/yodl-public-key.pem
-- ✅ Validate all input data before processing
+- 🛡️ Always validate JWT tokens using the SDK's verify() method
+- 🔑 The default public key is built-in, but can be overridden for testing
+- ✅ Handle all payment request errors appropriately
+- 🖼️ Ensure your Yapp is running in an iframe before making payment requests
+- 🔐 Only accept messages from your configured origin domain
 
 ## 📚 API Reference
 

@@ -1,5 +1,5 @@
 import { PaymentConfig } from '../types/config';
-import { CloseMessage, PaymentMessage } from '../types/messages';
+import { CloseMessage, PaymentMessage, PaymentResponseMessage } from '../types/messages';
 
 /**
  * Manages communication between the Yapp and its parent window.
@@ -7,23 +7,46 @@ import { CloseMessage, PaymentMessage } from '../types/messages';
  * The MessageManager handles sending messages securely from
  * the Yapp to its parent application, ensuring proper origin validation.
  *
+ * @throws {Error} If messages are sent outside an iframe or to invalid origins
+ *
  * @example
  * ```typescript
  * const messaging = new MessageManager('https://allowed-origin.com');
  *
- * // Send a payment request
- * messaging.sendPaymentRequest('recipient@example.com', {
- *   amount: 100,
- *   currency: 'USD',
- *   memo: 'Service payment'
- * });
+ * try {
+ *   // Send a payment request
+ *   const response = await messaging.sendPaymentRequest('0x123...', {
+ *     amount: 100,
+ *     currency: 'USD',
+ *     memo: 'Service payment'
+ *   });
+ * } catch (error) {
+ *   // Handle errors
+ * }
  * ```
  */
 export class MessageManager {
   private readonly allowedOrigin: string;
+  private messageListeners: Map<string, ((response: any) => void)[]> = new Map();
 
   constructor(allowedOrigin: string) {
     this.allowedOrigin = allowedOrigin;
+    this.setupMessageListener();
+  }
+
+  private setupMessageListener(): void {
+    window.addEventListener('message', (event) => {
+      if (!this.isOriginAllowed(event.origin)) {
+        return;
+      }
+
+      const message = event.data;
+      const listeners = this.messageListeners.get(message.type);
+      if (listeners) {
+        listeners.forEach(listener => listener(message));
+        this.messageListeners.delete(message.type);
+      }
+    });
   }
 
   /**
@@ -48,38 +71,83 @@ export class MessageManager {
   }
 
   /**
-   * Sends a payment request message to the parent window.
+   * Sends a payment request message to the parent window and waits for response.
    *
-   * @param address - The address to send the payment to
+   * @param address - The recipient's blockchain address
    * @param config - Payment configuration options
+   * @returns Promise that resolves with payment response containing txHash and chainId
+   * @throws {Error} If payment is cancelled ("Payment was cancelled"), times out ("Payment request timed out"),
+   *                 is sent outside an iframe, or to an invalid origin
    *
    * @example
    * ```typescript
-   * // Request a simple payment
-   * messaging.sendPaymentRequest('user@example.com', {
-   *   amount: 50,
-   *   currency: 'USD'
-   * });
+   * try {
+   *   const response = await messaging.sendPaymentRequest('0x123...', {
+   *     amount: 100,
+   *     currency: FiatCurrency.USD,
+   *     memo: 'Premium subscription'
+   *   });
    *
-   * // Request payment with memo
-   * messaging.sendPaymentRequest('store@example.com', {
-   *   amount: 99.99,
-   *   currency: 'EUR',
-   *   memo: 'Premium subscription - 1 year'
-   * });
+   *   // Handle successful payment
+   *   console.log('Transaction hash:', response.txHash);
+   *   console.log('Chain ID:', response.chainId);
+   * } catch (error) {
+   *   if (error.message === 'Payment was cancelled') {
+   *     console.log('User cancelled the payment');
+   *   } else if (error.message === 'Payment request timed out') {
+   *     console.log('Payment timed out after 5 minutes');
+   *   } else {
+   *     console.error('Payment failed:', error);
+   *   }
+   * }
    * ```
    */
-  public sendPaymentRequest(address: string, config: PaymentConfig): void {
-    const message: PaymentMessage = {
-      type: 'PAYMENT_REQUEST',
-      payload: {
-        address,
-        amount: config.amount,
-        currency: config.currency,
-        memo: config.memo,
-      },
-    };
-    this.sendMessageToParent(message, this.allowedOrigin);
+  public sendPaymentRequest(address: string, config: PaymentConfig): Promise<PaymentResponseMessage['payload']> {
+    return new Promise((resolve, reject) => {
+      const message: PaymentMessage = {
+        type: 'PAYMENT_REQUEST',
+        payload: {
+          address,
+          amount: config.amount,
+          currency: config.currency,
+          memo: config.memo,
+        },
+      };
+
+      // Add listener for payment success
+      const successListeners = this.messageListeners.get('PAYMENT_SUCCESS') || [];
+      successListeners.push((response: PaymentResponseMessage) => {
+        clearTimeout(timeout);
+        this.messageListeners.delete('PAYMENT_CANCELLED');
+        resolve(response.payload);
+      });
+      this.messageListeners.set('PAYMENT_SUCCESS', successListeners);
+
+      // Add listener for payment cancellation
+      const cancelListeners = this.messageListeners.get('PAYMENT_CANCELLED') || [];
+      cancelListeners.push(() => {
+        clearTimeout(timeout);
+        this.messageListeners.delete('PAYMENT_SUCCESS');
+        reject(new Error('Payment was cancelled'));
+      });
+      this.messageListeners.set('PAYMENT_CANCELLED', cancelListeners);
+
+      // Add timeout
+      const timeout = setTimeout(() => {
+        this.messageListeners.delete('PAYMENT_SUCCESS');
+        this.messageListeners.delete('PAYMENT_CANCELLED');
+        reject(new Error('Payment request timed out'));
+      }, 300000); // 5 minute timeout
+
+      try {
+        this.sendMessageToParent(message, this.allowedOrigin);
+      } catch (error) {
+        clearTimeout(timeout);
+        this.messageListeners.delete('PAYMENT_SUCCESS');
+        this.messageListeners.delete('PAYMENT_CANCELLED');
+        reject(error);
+      }
+    });
   }
 
   /**
