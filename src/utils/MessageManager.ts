@@ -1,9 +1,11 @@
 import { PaymentConfig } from '../types/config';
+import { FiatCurrency } from '../types/currency';
 import {
   CloseMessage,
   PaymentMessage,
   PaymentResponseMessage,
 } from '../types/messages';
+import { isValidFiatCurrency } from './currencyValidation';
 import { isValidMemoSize } from './memoValidation';
 
 /**
@@ -113,9 +115,19 @@ export class MessageManager {
     config: PaymentConfig,
   ): Promise<PaymentResponseMessage['payload']> {
     return new Promise((resolve, reject) => {
-      // Add memo validation
+      // Validate memo size
       if (config.memo && !isValidMemoSize(config.memo)) {
         reject(new Error('Memo exceeds maximum size of 32 bytes'));
+        return;
+      }
+
+      // Validate currency
+      if (!isValidFiatCurrency(config.currency)) {
+        reject(
+          new Error(
+            `Invalid currency "${config.currency}". Must be one of: ${Object.values(FiatCurrency).join(', ')}`,
+          ),
+        );
         return;
       }
 
