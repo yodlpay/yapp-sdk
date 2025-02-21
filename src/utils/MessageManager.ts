@@ -131,6 +131,12 @@ export class MessageManager {
         return;
       }
 
+      // Validate amount
+      if (typeof config.amount !== 'number' || config.amount <= 0) {
+        reject(new Error('Amount must be a positive number'));
+        return;
+      }
+
       const message: PaymentMessage = {
         type: 'PAYMENT_REQUEST',
         payload: {
