@@ -7,11 +7,11 @@ describe('isInIframe', () => {
     // Restore the original window object after each test
     Object.defineProperty(window, 'self', {
       value: originalWindow.self,
-      writable: true
+      writable: true,
     });
     Object.defineProperty(window, 'top', {
       value: originalWindow.top,
-      writable: true
+      writable: true,
     });
   });
 
@@ -19,11 +19,11 @@ describe('isInIframe', () => {
     // Set window.self and window.top to be the same
     Object.defineProperty(window, 'self', {
       value: window,
-      writable: true
+      writable: true,
     });
     Object.defineProperty(window, 'top', {
       value: window,
-      writable: true
+      writable: true,
     });
 
     expect(isInIframe()).toBe(false);
@@ -33,11 +33,11 @@ describe('isInIframe', () => {
     // Make window.self and window.top different
     Object.defineProperty(window, 'self', {
       value: {},
-      writable: true
+      writable: true,
     });
     Object.defineProperty(window, 'top', {
       value: { different: true },
-      writable: true
+      writable: true,
     });
 
     expect(isInIframe()).toBe(true);
@@ -48,7 +48,7 @@ describe('isInIframe', () => {
     Object.defineProperty(window, 'top', {
       get: () => {
         throw new Error('Security Error');
-      }
+      },
     });
 
     expect(isInIframe()).toBe(true);

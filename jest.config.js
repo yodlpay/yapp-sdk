@@ -14,6 +14,6 @@ module.exports = {
     'src/**/*.{ts,tsx}',
     '!src/**/*.test.{ts,tsx}',
     '!src/**/*.d.ts',
-    '!src/constants/keys.ts'
-  ]
+    '!src/constants/keys.ts',
+  ],
 };

@@ -167,7 +167,10 @@ class YappSDK {
    * }
    * ```
    */
-  public async requestPayment(address: string, config: PaymentConfig): Promise<PaymentResponse> {
+  public async requestPayment(
+    address: string,
+    config: PaymentConfig,
+  ): Promise<PaymentResponse> {
     this.ensureInitialized();
     return await this.messaging.sendPaymentRequest(address, config);
   }
