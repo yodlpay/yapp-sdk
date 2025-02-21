@@ -1,10 +1,19 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-  transform: {
-    '^.+\\.ts$': 'ts-jest',
+  testEnvironment: 'jsdom',
+  setupFiles: ['<rootDir>/jest.setup.js'],
+  moduleNameMapper: {
+    // Handle ES modules
+    '^jose/(.*)$': '<rootDir>/node_modules/jose/dist/node/cjs/$1',
   },
-  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
+      useESM: true,
+    }]
+  },
+  testMatch: [
+    '<rootDir>/src/**/__tests__/**/*.ts',
+    '<rootDir>/src/**/*.{spec,test}.ts'
+  ],
 };
