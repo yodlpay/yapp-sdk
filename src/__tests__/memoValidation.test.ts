@@ -31,8 +31,8 @@ describe('isValidMemoSize', () => {
 
   it('should handle mixed ASCII and UTF-8 characters', () => {
     expect(isValidMemoSize('Hello ñ World €')).toBe(true);
-    expect(isValidMemoSize('Hello 漢 €')).toBe(true);  // Much shorter base string
-    expect(isValidMemoSize('Hello 漢 € 123456789012345')).toBe(true);  // At the limit
-    expect(isValidMemoSize('Hello 漢 € 1234567890123456123123123')).toBe(false);  // Just over the limit
+    expect(isValidMemoSize('Hello 漢 €')).toBe(true); // Much shorter base string
+    expect(isValidMemoSize('Hello 漢 € 123456789012345')).toBe(true); // At the limit
+    expect(isValidMemoSize('Hello 漢 € 1234567890123456123123123')).toBe(false); // Just over the limit
   });
 });
