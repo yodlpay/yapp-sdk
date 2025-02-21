@@ -1,5 +1,10 @@
 import { PaymentConfig } from '../types/config';
-import { CloseMessage, PaymentMessage, PaymentResponseMessage } from '../types/messages';
+import {
+  CloseMessage,
+  PaymentMessage,
+  PaymentResponseMessage,
+} from '../types/messages';
+import { isValidMemoSize } from './memoValidation';
 
 /**
  * Manages communication between the Yapp and its parent window.
@@ -27,7 +32,8 @@ import { CloseMessage, PaymentMessage, PaymentResponseMessage } from '../types/m
  */
 export class MessageManager {
   private readonly allowedOrigin: string;
-  private messageListeners: Map<string, ((response: any) => void)[]> = new Map();
+  private messageListeners: Map<string, ((response: any) => void)[]> =
+    new Map();
 
   constructor(allowedOrigin: string) {
     this.allowedOrigin = allowedOrigin;
@@ -43,7 +49,7 @@ export class MessageManager {
       const message = event.data;
       const listeners = this.messageListeners.get(message.type);
       if (listeners) {
-        listeners.forEach(listener => listener(message));
+        listeners.forEach((listener) => listener(message));
         this.messageListeners.delete(message.type);
       }
     });
@@ -102,8 +108,17 @@ export class MessageManager {
    * }
    * ```
    */
-  public sendPaymentRequest(address: string, config: PaymentConfig): Promise<PaymentResponseMessage['payload']> {
+  public sendPaymentRequest(
+    address: string,
+    config: PaymentConfig,
+  ): Promise<PaymentResponseMessage['payload']> {
     return new Promise((resolve, reject) => {
+      // Add memo validation
+      if (config.memo && !isValidMemoSize(config.memo)) {
+        reject(new Error('Memo exceeds maximum size of 32 bytes'));
+        return;
+      }
+
       const message: PaymentMessage = {
         type: 'PAYMENT_REQUEST',
         payload: {
@@ -115,7 +130,8 @@ export class MessageManager {
       };
 
       // Add listener for payment success
-      const successListeners = this.messageListeners.get('PAYMENT_SUCCESS') || [];
+      const successListeners =
+        this.messageListeners.get('PAYMENT_SUCCESS') || [];
       successListeners.push((response: PaymentResponseMessage) => {
         clearTimeout(timeout);
         this.messageListeners.delete('PAYMENT_CANCELLED');
@@ -124,7 +140,8 @@ export class MessageManager {
       this.messageListeners.set('PAYMENT_SUCCESS', successListeners);
 
       // Add listener for payment cancellation
-      const cancelListeners = this.messageListeners.get('PAYMENT_CANCELLED') || [];
+      const cancelListeners =
+        this.messageListeners.get('PAYMENT_CANCELLED') || [];
       cancelListeners.push(() => {
         clearTimeout(timeout);
         this.messageListeners.delete('PAYMENT_SUCCESS');
@@ -133,11 +150,14 @@ export class MessageManager {
       this.messageListeners.set('PAYMENT_CANCELLED', cancelListeners);
 
       // Add timeout
-      const timeout = setTimeout(() => {
-        this.messageListeners.delete('PAYMENT_SUCCESS');
-        this.messageListeners.delete('PAYMENT_CANCELLED');
-        reject(new Error('Payment request timed out'));
-      }, 300000); // 5 minute timeout
+      const timeout = setTimeout(
+        () => {
+          this.messageListeners.delete('PAYMENT_SUCCESS');
+          this.messageListeners.delete('PAYMENT_CANCELLED');
+          reject(new Error('Payment request timed out'));
+        },
+        process.env.NODE_ENV === 'test' ? 1000 : 300000,
+      ); // 1 second timeout in test, 5 minutes in production
 
       try {
         this.sendMessageToParent(message, this.allowedOrigin);
