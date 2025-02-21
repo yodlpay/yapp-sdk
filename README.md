@@ -45,10 +45,10 @@ try {
   const payload = await sdk.verify(jwtToken);
 
   // The payload contains user information:
-  console.log(payload.sub);  // User's Ethereum address
-  console.log(payload.ens);  // User's primary ENS name
-  console.log(payload.iss);  // Community ENS name
-  console.log(payload.aud);  // Yapp application ENS name (must match your ensName)
+  console.log(payload.sub); // User's Ethereum address
+  console.log(payload.ens); // User's primary ENS name
+  console.log(payload.iss); // Community ENS name
+  console.log(payload.aud); // Yapp application ENS name (must match your ensName)
 } catch (error) {
   if (error.name === 'JWTAudError') {
     console.error('Token was issued for a different Yapp');
@@ -68,13 +68,18 @@ The JWT payload contains essential user information:
 ### 💸 Payment Requests
 
 ```typescript
+import { FiatCurrency } from '@yodlpay/yapp-sdk';
+
 try {
   // Request a payment
-  const response = await sdk.requestPayment('0x742d35Cc6634C0532925a3b844Bc454e4438f44e', {
-    amount: 100,
-    currency: 'USD',
-    memo: 'order_123', // Optional identifier (max 32 bytes) for your business logic
-  });
+  const response = await sdk.requestPayment(
+    '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+    {
+      amount: 100,
+      currency: FiatCurrency.USD,
+      memo: 'order_123', // Optional identifier (max 32 bytes) for your business logic
+    },
+  );
 
   console.log('Transaction hash:', response.txHash);
   console.log('Chain ID:', response.chainId);
@@ -90,9 +95,9 @@ try {
 
 // Example use cases for memo field:
 const examples = [
-  { amount: 50, currency: 'USD', memo: 'subscription_id_456' }, // Track subscriptions
-  { amount: 75, currency: 'EUR', memo: 'invoice_789' },        // Link to invoices
-  { amount: 120, currency: 'THB', memo: 'product_xyz_123' },   // Product purchases
+  { amount: 50, currency: FiatCurrency.USD, memo: 'subscription_id_456' }, // Track subscriptions
+  { amount: 75, currency: FiatCurrency.EUR, memo: 'invoice_789' }, // Link to invoices
+  { amount: 120, currency: FiatCurrency.THB, memo: 'product_xyz_123' }, // Product purchases
 ];
 ```
 

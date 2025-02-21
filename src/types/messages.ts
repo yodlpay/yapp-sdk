@@ -21,10 +21,10 @@ export interface CloseMessage extends BaseMessage {
 export interface PaymentMessage extends BaseMessage {
   type: 'PAYMENT_REQUEST';
   payload: {
-    address: string;  // Recipient's blockchain address
-    amount: number;   // Payment amount
-    currency: FiatCurrency;  // Payment currency
-    memo?: string;    // Optional payment description
+    address: string; // Recipient's blockchain address
+    amount: number; // Payment amount
+    currency: FiatCurrency; // Payment currency
+    memo?: string; // Optional payment description
   };
 }
 
@@ -34,8 +34,8 @@ export interface PaymentMessage extends BaseMessage {
 export interface PaymentResponseMessage extends BaseMessage {
   type: 'PAYMENT_SUCCESS';
   payload: {
-    txHash: string;   // Transaction hash
-    chainId: number;  // Chain ID where transaction was executed
+    txHash: string; // Transaction hash
+    chainId: number; // Chain ID where transaction was executed
   };
 }
 
