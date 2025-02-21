@@ -9,6 +9,7 @@
     "prepare": "npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "docs": "typedoc --out docs src/index.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
