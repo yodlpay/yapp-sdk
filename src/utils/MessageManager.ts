@@ -7,6 +7,7 @@ import {
 } from '../types/messages';
 import { isValidFiatCurrency } from './currencyValidation';
 import { isValidMemoSize } from './memoValidation';
+import { getSafeWindow, isBrowser } from './safeWindow';
 
 /**
  * Manages communication between the Yapp and its parent window.
@@ -39,11 +40,18 @@ export class MessageManager {
 
   constructor(allowedOrigin: string) {
     this.allowedOrigin = allowedOrigin;
-    this.setupMessageListener();
+    if (isBrowser()) {
+      this.setupMessageListener();
+    }
   }
 
   private setupMessageListener(): void {
-    window.addEventListener('message', (event) => {
+    const win = getSafeWindow();
+    if (!win) {
+      return;
+    }
+
+    win.addEventListener('message', (event) => {
       if (!this.isOriginAllowed(event.origin)) {
         return;
       }
@@ -211,10 +219,11 @@ export class MessageManager {
       );
     }
 
-    if (window.parent === window) {
+    const win = getSafeWindow();
+    if (!win || win.parent === win) {
       throw new Error('Cannot send message: SDK is not running in an iframe');
     }
 
-    window.parent.postMessage(message, targetOrigin);
+    win.parent.postMessage(message, targetOrigin);
   }
 }
