@@ -6,8 +6,40 @@ import {
   PaymentResponseMessage,
 } from '../types/messages';
 import { isValidFiatCurrency } from './currencyValidation';
-import { isValidMemoSize } from './memoValidation';
+import { isInIframe } from './isInIframe';
+import { createValidMemoFromUUID, isValidMemoSize } from './memoValidation';
 import { getSafeWindow, isBrowser } from './safeWindow';
+
+// Message types
+const MESSAGE_TYPE = {
+  REQUEST: 'PAYMENT_REQUEST',
+  SUCCESS: 'PAYMENT_SUCCESS',
+  CANCELLED: 'PAYMENT_CANCELLED',
+  CLOSE: 'CLOSE',
+} as const;
+
+// Configuration constants
+const PAYMENT_TIMEOUT_MS = 300000; // 5 minutes
+const TEST_TIMEOUT_MS = 1000; // 1 second for tests
+const STORAGE_KEY = 'yodl_payment_request';
+
+// URL parameters
+const URL_PARAMS = {
+  MEMO: 'memo',
+  STATUS: 'status',
+  TX_HASH: 'txHash',
+  CHAIN_ID: 'chainId',
+  REDIRECT_URL: 'redirectUrl',
+  STATUS_SUCCESS: 'success',
+  STATUS_CANCELLED: 'cancelled',
+} as const;
+
+const URL_PARAMS_REQUEST = {
+  MEMO: URL_PARAMS.MEMO,
+  REDIRECT_URL: URL_PARAMS.REDIRECT_URL,
+  AMOUNT: 'amount',
+  CURRENCY: 'currency',
+} as const;
 
 /**
  * Manages communication between the Yapp and its parent window.
@@ -146,7 +178,7 @@ export class MessageManager {
       }
 
       const message: PaymentMessage = {
-        type: 'PAYMENT_REQUEST',
+        type: MESSAGE_TYPE.REQUEST,
         payload: {
           address,
           amount: config.amount,
@@ -155,45 +187,159 @@ export class MessageManager {
         },
       };
 
-      // Add listener for payment success
-      const successListeners =
-        this.messageListeners.get('PAYMENT_SUCCESS') || [];
-      successListeners.push((response: PaymentResponseMessage) => {
-        clearTimeout(timeout);
-        this.messageListeners.delete('PAYMENT_CANCELLED');
-        resolve(response.payload);
-      });
-      this.messageListeners.set('PAYMENT_SUCCESS', successListeners);
+      // Check if running in iframe
+      if (isInIframe()) {
+        this.handleIframePayment(message, resolve, reject);
+      }
 
-      // Add listener for payment cancellation
-      const cancelListeners =
-        this.messageListeners.get('PAYMENT_CANCELLED') || [];
-      cancelListeners.push(() => {
-        clearTimeout(timeout);
-        this.messageListeners.delete('PAYMENT_SUCCESS');
-        reject(new Error('Payment was cancelled'));
-      });
-      this.messageListeners.set('PAYMENT_CANCELLED', cancelListeners);
+      if (!config.redirectUrl) {
+        reject(
+          new Error(
+            'Redirect URL is required when running outside of an iframe',
+          ),
+        );
+        return;
+      }
 
-      // Add timeout
-      const timeout = setTimeout(
-        () => {
-          this.messageListeners.delete('PAYMENT_SUCCESS');
-          this.messageListeners.delete('PAYMENT_CANCELLED');
-          reject(new Error('Payment request timed out'));
-        },
-        process.env.NODE_ENV === 'test' ? 1000 : 300000,
-      ); // 1 second timeout in test, 5 minutes in production
+      this.handleRedirectPayment(message, config.redirectUrl, resolve, reject);
+    });
+  }
 
-      try {
-        this.sendMessageToParent(message, this.allowedOrigin);
-      } catch (error) {
-        clearTimeout(timeout);
-        this.messageListeners.delete('PAYMENT_SUCCESS');
-        this.messageListeners.delete('PAYMENT_CANCELLED');
+  private handleIframePayment(
+    message: PaymentMessage,
+    resolve: (value: PaymentResponseMessage['payload']) => void,
+    reject: (reason: Error) => void,
+  ): void {
+    // Add listener for payment success
+    const successListeners =
+      this.messageListeners.get(MESSAGE_TYPE.SUCCESS) || [];
+    const timeout = this.setupPaymentTimeout(reject);
+
+    successListeners.push((response: PaymentResponseMessage) => {
+      clearTimeout(timeout);
+      this.messageListeners.delete(MESSAGE_TYPE.CANCELLED);
+      resolve(response.payload);
+    });
+    this.messageListeners.set(MESSAGE_TYPE.SUCCESS, successListeners);
+
+    // Add listener for payment cancellation
+    const cancelListeners =
+      this.messageListeners.get(MESSAGE_TYPE.CANCELLED) || [];
+    cancelListeners.push(() => {
+      clearTimeout(timeout);
+      this.messageListeners.delete(MESSAGE_TYPE.SUCCESS);
+      reject(new Error('Payment was cancelled'));
+    });
+    this.messageListeners.set(MESSAGE_TYPE.CANCELLED, cancelListeners);
+
+    try {
+      this.sendMessageToParent(message, this.allowedOrigin);
+    } catch (error) {
+      clearTimeout(timeout);
+      this.messageListeners.delete(MESSAGE_TYPE.SUCCESS);
+      this.messageListeners.delete(MESSAGE_TYPE.CANCELLED);
+
+      if (error instanceof Error) {
         reject(error);
+      } else {
+        reject(new Error('Unknown error ' + error));
+      }
+    }
+  }
+
+  private handleRedirectPayment(
+    message: PaymentMessage,
+    redirectUrl: string,
+    resolve: (value: PaymentResponseMessage['payload']) => void,
+    reject: (reason: Error) => void,
+  ): void {
+    const memo =
+      message.payload.memo || createValidMemoFromUUID(message.payload.address);
+
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        timestamp: Date.now(),
+        ...message.payload,
+        memo,
+      }),
+    );
+
+    // Open payment page in current window
+    const paymentUrl = new URL(this.allowedOrigin);
+    paymentUrl.pathname = `/${message.payload.address}`;
+    paymentUrl.searchParams.set(
+      URL_PARAMS_REQUEST.REDIRECT_URL,
+      encodeURIComponent(redirectUrl),
+    );
+    paymentUrl.searchParams.set(URL_PARAMS_REQUEST.MEMO, memo);
+    paymentUrl.searchParams.set(
+      URL_PARAMS_REQUEST.AMOUNT,
+      message.payload.amount.toString(),
+    );
+    paymentUrl.searchParams.set(
+      URL_PARAMS_REQUEST.CURRENCY,
+      message.payload.currency,
+    );
+
+    window.location.href = paymentUrl.toString();
+
+    this.setupReturnUrlHandler(memo, resolve, reject);
+  }
+
+  private setupReturnUrlHandler(
+    memo: string,
+    resolve: (value: PaymentResponseMessage['payload']) => void,
+    reject: (reason: Error) => void,
+  ): void {
+    const handleReturn = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const returnedMemo = urlParams.get(URL_PARAMS.MEMO);
+      const status = urlParams.get(URL_PARAMS.STATUS);
+      const txHash = urlParams.get(URL_PARAMS.TX_HASH);
+      const chainId = urlParams.get(URL_PARAMS.CHAIN_ID);
+
+      if (returnedMemo === memo) {
+        // Clean up URL parameters
+        const cleanUrl = window.location.href.split('?')[0];
+        window.history.replaceState({}, document.title, cleanUrl);
+
+        if (status === URL_PARAMS.STATUS_SUCCESS && txHash && chainId) {
+          resolve({
+            txHash,
+            chainId: parseInt(chainId, 10),
+          });
+        } else if (status === URL_PARAMS.STATUS_CANCELLED) {
+          reject(new Error('Payment was cancelled'));
+        } else {
+          reject(new Error('Payment failed'));
+        }
+
+        // Clean up storage
+        sessionStorage.removeItem(STORAGE_KEY);
+      }
+    };
+
+    // Check if we're already on the return URL
+    handleReturn();
+
+    // Set up visibility change listener for tab switch
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        handleReturn();
       }
     });
+  }
+
+  private setupPaymentTimeout(reject: (reason: Error) => void): NodeJS.Timeout {
+    return setTimeout(
+      () => {
+        this.messageListeners.delete(MESSAGE_TYPE.SUCCESS);
+        this.messageListeners.delete(MESSAGE_TYPE.CANCELLED);
+        reject(new Error('Payment request timed out'));
+      },
+      process.env.NODE_ENV === 'test' ? TEST_TIMEOUT_MS : PAYMENT_TIMEOUT_MS,
+    );
   }
 
   /**
@@ -201,7 +347,7 @@ export class MessageManager {
    */
   public sendCloseMessage(targetOrigin: string): void {
     const message: CloseMessage = {
-      type: 'CLOSE',
+      type: MESSAGE_TYPE.CLOSE,
     };
     this.sendMessageToParent(message, targetOrigin);
   }

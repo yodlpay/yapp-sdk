@@ -47,4 +47,6 @@ export interface PaymentConfig {
   currency: FiatCurrency;
   /** Optional payment memo/description */
   memo?: string;
+  /** Payment redirect URL - Required when application runs outside of an iframe */
+  redirectUrl?: string;
 }
