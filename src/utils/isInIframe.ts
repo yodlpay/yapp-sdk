@@ -1,18 +1,18 @@
-import { getSafeWindow, isBrowser } from './safeWindow';
+import { getSafeWindow } from './safeWindow';
 
 /**
  * Checks if the current code is running inside an iframe
  * @returns {boolean} True if running in an iframe, false otherwise
  */
 export function isInIframe(): boolean {
-  // Return false in SSR environment
-  if (!isBrowser()) {
+  // Use getSafeWindow to check if in a browser environment
+  const win = getSafeWindow();
+  if (win === null) {
     return false;
   }
 
   try {
-    const win = getSafeWindow();
-    return win !== null && win.self !== win.top;
+    return win.self !== win.top;
   } catch (e) {
     // If we can't access window.top due to same-origin policy,
     // we're definitely in a cross-origin iframe

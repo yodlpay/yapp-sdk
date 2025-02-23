@@ -2,11 +2,11 @@
  * Returns the window object if in browser environment, null otherwise
  * @returns window object or null in SSR
  */
-export const getSafeWindow = (): (Window & typeof globalThis) | null => {
-  if (typeof window === 'undefined') {
+export const getSafeWindow = (): Window | null => {
+  if (!isBrowser()) {
     return null;
   }
-  return window as Window & typeof globalThis;
+  return window;
 };
 
 /**
