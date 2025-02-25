@@ -155,53 +155,72 @@ export class MessageManager {
     config: PaymentConfig,
   ): Promise<PaymentResponseMessage['payload']> {
     return new Promise((resolve, reject) => {
-      // Validate memo size
-      if (config.memo && !isValidMemoSize(config.memo)) {
-        reject(new Error('Memo exceeds maximum size of 32 bytes'));
-        return;
-      }
+      // First try to recover any pending payment
+      this.recoverPendingPayment()
+        .then((recoveredPayment) => {
+          if (recoveredPayment) {
+            resolve(recoveredPayment);
+            return;
+          }
 
-      // Validate currency
-      if (!isValidFiatCurrency(config.currency)) {
-        reject(
-          new Error(
-            `Invalid currency "${config.currency}". Must be one of: ${Object.values(FiatCurrency).join(', ')}`,
-          ),
-        );
-        return;
-      }
+          // Continue with normal payment flow if no recovery
+          // Validate memo size
+          if (config.memo && !isValidMemoSize(config.memo)) {
+            reject(new Error('Memo exceeds maximum size of 32 bytes'));
+            return;
+          }
 
-      // Validate amount
-      if (typeof config.amount !== 'number' || config.amount <= 0) {
-        reject(new Error('Amount must be a positive number'));
-        return;
-      }
+          // Validate currency
+          if (!isValidFiatCurrency(config.currency)) {
+            reject(
+              new Error(
+                `Invalid currency "${config.currency}". Must be one of: ${Object.values(FiatCurrency).join(', ')}`,
+              ),
+            );
+            return;
+          }
 
-      const message: PaymentMessage = {
-        type: MESSAGE_TYPE.REQUEST,
-        payload: {
-          address,
-          amount: config.amount,
-          currency: config.currency,
-          memo: config.memo,
-        },
-      };
+          // Validate amount
+          if (typeof config.amount !== 'number' || config.amount <= 0) {
+            reject(new Error('Amount must be a positive number'));
+            return;
+          }
 
-      // Check if running in iframe
-      if (isInIframe()) {
-        this.handleIframePayment(message, resolve, reject);
-      }
+          const message: PaymentMessage = {
+            type: MESSAGE_TYPE.REQUEST,
+            payload: {
+              address,
+              amount: config.amount,
+              currency: config.currency,
+              memo: config.memo,
+            },
+          };
 
-      if (!config.redirectUrl) {
-        reject(
-          new Error(
-            'Redirect URL is required when running outside of an iframe',
-          ),
-        );
-        return;
-      }
+          // Check if running in iframe
+          if (isInIframe()) {
+            this.handleIframePayment(message, resolve, reject);
+            return;
+          }
 
-      this.handleRedirectPayment(message, config.redirectUrl, resolve, reject);
+          if (!config.redirectUrl) {
+            reject(
+              new Error(
+                'Redirect URL is required when running outside of an iframe',
+              ),
+            );
+            return;
+          }
+
+          this.handleRedirectPayment(
+            message,
+            config.redirectUrl,
+            resolve,
+            reject,
+          );
+        })
+        .catch((error) => {
+          reject(error);
+        });
     });
   }
 
@@ -253,21 +272,43 @@ export class MessageManager {
     resolve: (value: PaymentResponseMessage['payload']) => void,
     reject: (reason: Error) => void,
   ): void {
+    // Generate or use existing memo
     const memo =
       message.payload.memo || createValidMemoFromUUID(message.payload.address);
 
+    // Check if we have a pending payment with the same memo
+    const existingPayment = sessionStorage.getItem(STORAGE_KEY);
+    if (existingPayment) {
+      try {
+        const parsedPayment = JSON.parse(existingPayment);
+        // If we have a timeout ID, clear it
+        if (parsedPayment.timeoutId) {
+          clearTimeout(parsedPayment.timeoutId);
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    }
+
+    // Store payment data in session storage
     sessionStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
         timestamp: Date.now(),
         ...message.payload,
         memo,
+        redirectUrl, // Store the redirect URL for potential recovery
       }),
     );
+
+    // Setup the return handler BEFORE redirecting
+    this.setupReturnUrlHandler(memo, resolve, reject);
 
     // Open payment page in current window
     const paymentUrl = new URL(this.allowedOrigin);
     paymentUrl.pathname = `/${message.payload.address}`;
+
+    // Encode all parameters properly
     paymentUrl.searchParams.set(
       URL_PARAMS_REQUEST.REDIRECT_URL,
       encodeURIComponent(redirectUrl),
@@ -282,9 +323,8 @@ export class MessageManager {
       message.payload.currency,
     );
 
+    // Navigate to the payment URL
     window.location.href = paymentUrl.toString();
-
-    this.setupReturnUrlHandler(memo, resolve, reject);
   }
 
   private setupReturnUrlHandler(
@@ -292,6 +332,7 @@ export class MessageManager {
     resolve: (value: PaymentResponseMessage['payload']) => void,
     reject: (reason: Error) => void,
   ): void {
+    // Create a function to handle URL parameters
     const handleReturn = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const returnedMemo = urlParams.get(URL_PARAMS.MEMO);
@@ -299,10 +340,17 @@ export class MessageManager {
       const txHash = urlParams.get(URL_PARAMS.TX_HASH);
       const chainId = urlParams.get(URL_PARAMS.CHAIN_ID);
 
+      // Only process if this is our memo
       if (returnedMemo === memo) {
         // Clean up URL parameters
         const cleanUrl = window.location.href.split('?')[0];
         window.history.replaceState({}, document.title, cleanUrl);
+
+        // Clean up storage regardless of outcome
+        sessionStorage.removeItem(STORAGE_KEY);
+
+        // Remove the visibility change listener
+        document.removeEventListener('visibilitychange', visibilityHandler);
 
         if (status === URL_PARAMS.STATUS_SUCCESS && txHash && chainId) {
           resolve({
@@ -314,21 +362,44 @@ export class MessageManager {
         } else {
           reject(new Error('Payment failed'));
         }
-
-        // Clean up storage
-        sessionStorage.removeItem(STORAGE_KEY);
       }
     };
+
+    // Create a named function for the visibility handler so we can remove it later
+    const visibilityHandler = () => {
+      if (document.visibilityState === 'visible') {
+        handleReturn();
+      }
+    };
+
+    // Set up visibility change listener for tab switch
+    document.addEventListener('visibilitychange', visibilityHandler);
 
     // Check if we're already on the return URL
     handleReturn();
 
-    // Set up visibility change listener for tab switch
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        handleReturn();
-      }
-    });
+    // Set up a timeout to clean up if no response is received
+    const cleanupTimeout = setTimeout(
+      () => {
+        document.removeEventListener('visibilitychange', visibilityHandler);
+        reject(new Error('Payment request timed out'));
+        sessionStorage.removeItem(STORAGE_KEY);
+      },
+      process.env.NODE_ENV === 'test' ? TEST_TIMEOUT_MS : PAYMENT_TIMEOUT_MS,
+    );
+
+    // Store the timeout ID in session storage so we can clear it if needed
+    const existingData = sessionStorage.getItem(STORAGE_KEY);
+    if (existingData) {
+      const parsedData = JSON.parse(existingData);
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          ...parsedData,
+          timeoutId: cleanupTimeout,
+        }),
+      );
+    }
   }
 
   private setupPaymentTimeout(reject: (reason: Error) => void): NodeJS.Timeout {
@@ -371,5 +442,81 @@ export class MessageManager {
     }
 
     win.parent.postMessage(message, targetOrigin);
+  }
+
+  /**
+   * Attempts to recover an in-progress payment after page reload
+   * @returns Promise that resolves if a payment is recovered and completed
+   */
+  public recoverPendingPayment(): Promise<
+    PaymentResponseMessage['payload'] | null
+  > {
+    return new Promise((resolve, reject) => {
+      // First check if we have URL parameters that indicate a completed payment
+      const urlParams = new URLSearchParams(window.location.search);
+      const txHash = urlParams.get(URL_PARAMS.TX_HASH);
+      const chainId = urlParams.get(URL_PARAMS.CHAIN_ID);
+      const status = urlParams.get(URL_PARAMS.STATUS);
+
+      // If we have transaction data in the URL, return it immediately
+      if (txHash && chainId) {
+        // Clean up URL parameters
+        const cleanUrl = window.location.href.split('?')[0];
+        window.history.replaceState({}, document.title, cleanUrl);
+
+        // Clean up storage
+        sessionStorage.removeItem(STORAGE_KEY);
+
+        resolve({
+          txHash,
+          chainId: parseInt(chainId, 10),
+        });
+        return;
+      }
+
+      // If payment was cancelled via URL params
+      if (status === URL_PARAMS.STATUS_CANCELLED) {
+        // Clean up URL parameters
+        const cleanUrl = window.location.href.split('?')[0];
+        window.history.replaceState({}, document.title, cleanUrl);
+
+        // Clean up storage
+        sessionStorage.removeItem(STORAGE_KEY);
+
+        reject(new Error('Payment was cancelled'));
+        return;
+      }
+
+      // Continue with existing session storage recovery logic
+      const storedPayment = sessionStorage.getItem(STORAGE_KEY);
+      if (!storedPayment) {
+        resolve(null);
+        return;
+      }
+
+      try {
+        const payment = JSON.parse(storedPayment);
+        const now = Date.now();
+
+        // Check if the payment request is still valid (not expired)
+        if (payment.timestamp && now - payment.timestamp > PAYMENT_TIMEOUT_MS) {
+          sessionStorage.removeItem(STORAGE_KEY);
+          resolve(null);
+          return;
+        }
+
+        // If we have a memo, set up the return handler
+        if (payment.memo) {
+          this.setupReturnUrlHandler(payment.memo, resolve, reject);
+        } else {
+          sessionStorage.removeItem(STORAGE_KEY);
+          resolve(null);
+        }
+      } catch (error) {
+        console.warn('Failed to recover payment:', error);
+        sessionStorage.removeItem(STORAGE_KEY);
+        resolve(null);
+      }
+    });
   }
 }

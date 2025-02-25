@@ -176,6 +176,32 @@ class YappSDK {
   }
 
   /**
+   * Attempts to recover a pending payment after page reload or interruption.
+   * This is automatically called when making a new payment request, but can also
+   * be called explicitly to check for and recover pending payments.
+   *
+   * @returns Promise that resolves with payment response if a pending payment is recovered,
+   *          or null if no pending payment exists or the payment has expired
+   * @throws {Error} If recovery fails or payment is cancelled/times out
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const recoveredPayment = await sdk.recoverPendingPayment();
+   *   if (recoveredPayment) {
+   *     console.log('Recovered payment:', recoveredPayment.txHash);
+   *   }
+   * } catch (error) {
+   *   console.error('Recovery failed:', error);
+   * }
+   * ```
+   */
+  public async recoverPendingPayment(): Promise<PaymentResponse | null> {
+    this.ensureInitialized();
+    return await this.messaging.recoverPendingPayment();
+  }
+
+  /**
    * Sends a close message to the parent window.
    *
    * @param targetOrigin - The origin of the parent window
