@@ -214,6 +214,57 @@ const examples = [
 ];
 ```
 
+### 🔍 Fetching Payment Details
+
+Once you have the transaction hash from a successful payment, you can fetch the complete payment details using the Yodl API:
+
+```typescript
+// Example of fetching payment details with the transaction hash
+const fetchPaymentDetails = async (txHash) => {
+  try {
+    const response = await fetch(
+      `https://tx.yodl.me/api/v1/payments/${txHash}`,
+    );
+    const data = await response.json();
+    return data.payment;
+  } catch (error) {
+    console.error('Error fetching payment details:', error);
+    throw error;
+  }
+};
+```
+
+The API response includes comprehensive payment information:
+
+```json
+{
+  "payment": {
+    "chainId": 8453,
+    "txHash": "0x123c86bcf2a0aeadd269f30719a6ce7eef515a1a36600751a42ca77d42c802bc",
+    "paymentIndex": 0,
+    "destinationChainId": null,
+    "destinationTxHash": null,
+    "blockTimestamp": "2025-02-24T12:09:37.000Z",
+    "tokenOutSymbol": "USDC",
+    "tokenOutAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "tokenOutAmountGross": "10.03888",
+    "receiverAddress": "0xa1833B1A4DC461D3C025DbC99B71b127AEdbA45c",
+    "receiverEnsPrimaryName": null,
+    "invoiceCurrency": "USD",
+    "invoiceAmount": "10.04",
+    "senderAddress": "0x065c1BC23aE559BFFDBE5bbc335C30f30bE2b992",
+    "senderEnsPrimaryName": "maradona.yodl.eth"
+  }
+}
+```
+
+This detailed information can be used for:
+
+- Verifying payment amounts and currencies
+- Recording sender and receiver information
+- Tracking payment timestamps
+- Implementing receipt generation
+
 ### 🖼️ Iframe Integration
 
 #### Detection
@@ -263,36 +314,6 @@ try {
    - Only accept messages from configured origins
    - Validate all incoming messages
    - Use secure postMessage communication
-
-## 🚨 Error Handling
-
-The SDK throws specific errors that you should handle:
-
-```typescript
-try {
-  // SDK operations
-} catch (error) {
-  switch (error.name) {
-    case 'JWTAudError':
-      // Handle invalid audience
-      break;
-    default:
-      switch (error.message) {
-        case 'Payment was cancelled':
-          // Handle user cancellation
-          break;
-        case 'Payment request timed out':
-          // Handle timeout (5 minutes)
-          break;
-        case 'Memo exceeds maximum size of 32 bytes':
-          // Handle invalid memo
-          break;
-        default:
-        // Handle other errors
-      }
-  }
-}
-```
 
 ## 📚 API Reference
 
