@@ -21,13 +21,17 @@ const sdk = new YappSDK({
 });
 ```
 
-## 💰 Payment Creation & Recovery Example
+## 💰 Payment Creation Example
 
-Here's a focused example demonstrating how to create and recover payments with the YappSDK:
+Here's a focused example demonstrating how to create payments with the YappSDK:
 
 ```tsx
-import React, { useEffect, useState } from 'react';
-import YappSDK, { FiatCurrency, PaymentResponse } from '@yodlpay/yapp-sdk';
+import React, { useState, useEffect } from 'react';
+import YappSDK, {
+  FiatCurrency,
+  PaymentResponse,
+  isInIframe,
+} from '@yodlpay/yapp-sdk';
 
 const sdk = new YappSDK({
   ensName: 'my-yapp.eth',
@@ -39,33 +43,31 @@ function PaymentExample() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [recoveryAttempted, setRecoveryAttempted] = useState(false);
 
-  // Attempt payment recovery on component mount
+  // Check for payment information in URL on component mount
   useEffect(() => {
-    const attemptRecovery = async () => {
-      try {
-        // Attempt to recover any pending payment
-        setIsLoading(true);
-        const recoveredPayment = await sdk.recoverPendingPayment();
+    // Parse payment information from URL (for redirect flow)
+    const urlPaymentResult = sdk.parsePaymentFromUrl();
 
-        if (recoveredPayment) {
-          console.log('Recovered payment:', recoveredPayment);
-          setPaymentResult(recoveredPayment);
-        }
+    if (urlPaymentResult) {
+      // Payment was successful via redirect
+      setPaymentResult(urlPaymentResult);
+      console.log('Payment successful (redirect):', urlPaymentResult);
 
-        setRecoveryAttempted(true);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Payment recovery failed:', error);
-        setError('Failed to recover payment');
-        setIsLoading(false);
-        setRecoveryAttempted(true);
-      }
-    };
-
-    attemptRecovery();
+      // Clean the URL to prevent duplicate processing on refresh
+      // Note: You would need to implement this method or use history API
+      cleanPaymentUrl();
+    }
   }, []);
+
+  // Helper function to clean payment parameters from URL
+  const cleanPaymentUrl = () => {
+    // Remove payment parameters from URL without page refresh
+    const url = new URL(window.location.href);
+    url.searchParams.delete('txHash');
+    url.searchParams.delete('chainId');
+    window.history.replaceState({}, document.title, url.toString());
+  };
 
   // Create a new payment
   const createPayment = async () => {
@@ -106,38 +108,9 @@ function PaymentExample() {
     }
   };
 
-  // Manually attempt to recover a pending payment
-  const recoverPayment = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const recoveredPayment = await sdk.recoverPendingPayment();
-
-      if (recoveredPayment) {
-        setPaymentResult(recoveredPayment);
-        console.log('Payment recovered successfully:', recoveredPayment);
-      } else {
-        setError('No pending payment found to recover');
-      }
-    } catch (error) {
-      console.error('Payment recovery failed:', error);
-      setError(`Recovery failed: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="payment-container">
       <h1>Payment Example</h1>
-
-      {/* Show recovery status */}
-      {recoveryAttempted && !paymentResult && !isLoading && (
-        <div className="info-message">
-          <p>No pending payments found to recover.</p>
-        </div>
-      )}
 
       {/* Payment result */}
       {paymentResult && (
@@ -175,14 +148,6 @@ function PaymentExample() {
         >
           Create New Payment
         </button>
-
-        <button
-          onClick={recoverPayment}
-          disabled={isLoading}
-          className="recovery-button"
-        >
-          Recover Pending Payment
-        </button>
       </div>
     </div>
   );
@@ -191,110 +156,39 @@ function PaymentExample() {
 export default PaymentExample;
 ```
 
-### Key Points About Payment Creation & Recovery
+### Key Points About Payment Creation
 
 1. **Singleton SDK Instance**
 
    - The SDK is initialized once outside the component as a singleton
    - This allows the same SDK instance to be reused across multiple components
 
-2. **Automatic Recovery on Initialization**
-
-   - The component still attempts to recover pending payments when mounted
-   - This happens in the `useEffect` hook, but now uses the shared SDK instance
-
-3. **Creating a Payment**
+2. **Creating a Payment**
 
    - The `createPayment` function demonstrates how to request a new payment
    - It includes proper error handling for common scenarios (cancellation, timeout)
    - A unique memo/order ID is generated for each payment
 
-4. **Manual Recovery**
-
-   - The `recoverPayment` function shows how to manually trigger payment recovery
-   - This is useful when you want to give users a way to retry recovery
-
-5. **Payment States**
+3. **Payment States**
 
    - The example tracks loading states, errors, and successful payments
    - It provides appropriate UI feedback for each state
 
-6. **Implementation Notes**
-   - Recovery is attempted automatically on component mount
-   - Both iframe and redirect flows are supported with the `redirectUrl` parameter
-   - Transaction details (hash and chain ID) are displayed after successful payment
+4. **Redirect Flow Support**
+   - The component checks for payment information in the URL on mount using `parsePaymentFromUrl()`
+   - Successfully handles both iframe and redirect payment flows
+   - Cleans up URL parameters after processing to prevent duplicate handling
 
-This pattern ensures that users don't lose their payment progress due to page refreshes or navigation, providing a more reliable payment experience.
+### 🔄 Payment Flow
 
-## 🔑 Key Features
-
-### 🎟️ Authentication & Token Validation
-
-The SDK provides secure JWT token validation for user authentication:
+The SDK provides a streamlined payment flow:
 
 ```typescript
-try {
-  // Get the JWT token from URL parameter
-  const urlParams = new URLSearchParams(window.location.search);
-  const jwtToken = urlParams.get('token');
-
-  // Validate JWT token securely
-  const payload = await sdk.verify(jwtToken);
-
-  // Access user information from the payload
-  console.log(payload.sub); // User's Ethereum address
-  console.log(payload.ens); // User's primary ENS name
-  console.log(payload.iss); // Community ENS name
-  console.log(payload.aud); // Yapp application ENS name
-} catch (error) {
-  if (error.name === 'JWTAudError') {
-    console.error('Token was issued for a different Yapp');
-  } else {
-    console.error('Token validation failed:', error);
-  }
-}
+// Make a payment request
+const response = await sdk.requestPayment(address, config);
 ```
 
-#### JWT Payload Structure
-
-- `sub`: User's Ethereum wallet address (e.g., "0x742d35Cc6634C0532925a3b844Bc454e4438f44e") 👛
-- `ens`: User's primary ENS name (e.g., "user.eth") 🏷️
-- `iss`: User's community ENS name (e.g., "user.community.eth") 👥
-- `aud`: MUST match your ensName in the YappSDK config ✅
-
-### 💸 Payment Processing
-
-The SDK supports both iframe and redirect-based payment flows:
-
-```typescript
-import { FiatCurrency } from '@yodlpay/yapp-sdk';
-
-try {
-  const response = await sdk.requestPayment(
-    '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-    {
-      amount: 100,
-      currency: FiatCurrency.USD,
-      memo: 'order_123',
-      redirectUrl: 'https://your-app.com/payment-callback', // Required for non-iframe mode
-    },
-  );
-
-  console.log('Transaction hash:', response.txHash);
-  console.log('Chain ID:', response.chainId);
-} catch (error) {
-  switch (error.message) {
-    case 'Payment was cancelled':
-      console.log('User cancelled the payment');
-      break;
-    case 'Payment request timed out':
-      console.log('Payment timed out after 5 minutes');
-      break;
-    default:
-      console.error('Payment failed:', error);
-  }
-}
-```
+The payment flow handles both iframe and redirect modes automatically based on the environment.
 
 #### Payment Configuration
 
@@ -319,44 +213,6 @@ const examples = [
   { amount: 120, currency: FiatCurrency.THB, memo: 'product_xyz_123' },
 ];
 ```
-
-### 🔄 Payment Recovery
-
-The SDK provides both automatic and manual payment recovery after page reloads or interruptions:
-
-#### Automatic Recovery
-
-```typescript
-// The SDK will automatically attempt to recover any pending payment
-// when making a new payment request
-const response = await sdk.requestPayment(address, config);
-```
-
-#### Manual Recovery
-
-```typescript
-// Explicitly check for and recover pending payments
-try {
-  const recoveredPayment = await sdk.recoverPendingPayment();
-  if (recoveredPayment) {
-    // Handle recovered payment
-    console.log('Recovered payment:', recoveredPayment.txHash);
-    console.log('Chain ID:', recoveredPayment.chainId);
-  } else {
-    // No pending payment found
-    console.log('No pending payment to recover');
-  }
-} catch (error) {
-  // Handle recovery errors (timeout, cancellation, etc.)
-  console.error('Recovery failed:', error);
-}
-```
-
-Manual recovery is useful when you want to:
-
-- Check for pending payments without making a new request
-- Implement custom recovery UI/logic
-- Handle recovery separately from new payment requests
 
 ### 🖼️ Iframe Integration
 

@@ -62,9 +62,33 @@ export interface PaymentResponse {
  *   console.error('Payment failed:', error);
  * }
  * ```
+ *
+ * @example
+ * Handling redirect payments:
+ * ```typescript
+ * // On your redirect page (e.g., /payment-callback):
+ * const sdk = new YappSDK({
+ *   ensName: 'myapp.eth'
+ * });
+ *
+ * // Check if this page load is a payment return
+ * const paymentResult = sdk.parsePaymentFromUrl();
+ *
+ * if (paymentResult) {
+ *   // Payment was successful - txHash and chainId are present in the URL
+ *   console.log('Payment completed on chain:', paymentResult.chainId);
+ *   console.log('Transaction hash:', paymentResult.txHash);
+ *
+ *   // Update your UI or redirect to a success page
+ *   updatePaymentStatus('success', paymentResult);
+ * } else {
+ *   // Check if payment was cancelled or handle other cases
+ *   console.log('No payment data found in URL');
+ * }
+ * ```
  */
 class YappSDK {
-  /** Instance of SecurityManager handling encryption and origin validation */
+  /** Instance of MessageManager handling messaging and origin validation */
   private messaging!: MessageManager;
   private config!: YappSDKConfig;
 
@@ -118,8 +142,9 @@ class YappSDK {
   /**
    * Validates and decodes a JWT token.
    *
-   * @param token - The JWT token to validate and decode
+   * @param jwt - The JWT token to validate and decode
    * @returns The decoded payload data if the token is valid
+   * @throws {JWTAudError} If the token's audience doesn't match the configured ensName
    * @throws {Error} If the token is invalid or verification fails
    */
   public async verify(jwt: string): Promise<JWTPayload | undefined> {
@@ -176,36 +201,47 @@ class YappSDK {
   }
 
   /**
-   * Attempts to recover a pending payment after page reload or interruption.
-   * This is automatically called when making a new payment request, but can also
-   * be called explicitly to check for and recover pending payments.
+   * Parses payment information from URL parameters.
+   * This is useful when implementing a redirect flow where users complete payments in a new tab.
    *
-   * @returns Promise that resolves with payment response if a pending payment is recovered,
-   *          or null if no pending payment exists or the payment has expired
-   * @throws {Error} If recovery fails or payment is cancelled/times out
+   * @returns Payment response if URL contains valid payment parameters, null otherwise
    *
    * @example
    * ```typescript
-   * try {
-   *   const recoveredPayment = await sdk.recoverPendingPayment();
-   *   if (recoveredPayment) {
-   *     console.log('Recovered payment:', recoveredPayment.txHash);
-   *   }
-   * } catch (error) {
-   *   console.error('Recovery failed:', error);
+   * // On your redirect page:
+   * const sdk = new YappSDK({
+   *   ensName: 'myapp.eth'
+   * });
+   *
+   * const paymentResult = sdk.parsePaymentFromUrl();
+   * if (paymentResult) {
+   *   console.log('Payment completed:', paymentResult.txHash);
+   *   // Process successful payment
    * }
    * ```
    */
-  public async recoverPendingPayment(): Promise<PaymentResponse | null> {
-    this.ensureInitialized();
-    return await this.messaging.recoverPendingPayment();
+  public parsePaymentFromUrl(): PaymentResponse | null {
+    // Extract URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const txHash = urlParams.get('txHash');
+    const chainId = urlParams.get('chainId');
+
+    // If we have transaction data in the URL, return it
+    if (txHash && chainId) {
+      return {
+        txHash,
+        chainId: parseInt(chainId, 10),
+      };
+    }
+
+    return null;
   }
 
   /**
    * Sends a close message to the parent window.
    *
    * @param targetOrigin - The origin of the parent window
-   * @throws {Error} If the SDK is not initialized or the origin is not allowed
+   * @throws {Error} If the SDK is not initialized
    */
   public close(targetOrigin: string): void {
     this.ensureInitialized();

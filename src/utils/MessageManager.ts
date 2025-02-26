@@ -46,6 +46,9 @@ const URL_PARAMS_REQUEST = {
  *
  * The MessageManager handles sending messages securely from
  * the Yapp to its parent application, ensuring proper origin validation.
+ * It supports two payment flow modes:
+ * 1. Iframe mode: Communication via postMessage API
+ * 2. Redirect mode: Communication via URL parameters and page redirects
  *
  * @throws {Error} If messages are sent outside an iframe or to invalid origins
  *
@@ -57,9 +60,13 @@ const URL_PARAMS_REQUEST = {
  *   // Send a payment request
  *   const response = await messaging.sendPaymentRequest('0x123...', {
  *     amount: 100,
- *     currency: 'USD',
- *     memo: 'Service payment'
+ *     currency: FiatCurrency.USD,
+ *     memo: 'Service payment',
+ *     redirectUrl: 'https://myapp.com/payment-callback' // Required when not in iframe
  *   });
+ *
+ *   // Handle successful response
+ *   console.log(`Transaction: ${response.txHash} on chain ${response.chainId}`);
  * } catch (error) {
  *   // Handle errors
  * }
@@ -99,13 +106,11 @@ export class MessageManager {
 
   /**
    * Validates if the provided origin is in the list of allowed origins.
+   * Compares the origins by parsing them as URLs and checking their origin property.
    *
-   * @example
-   * ```typescript
-   * if (messaging.isOriginAllowed('https://trusted-domain.com')) {
-   *   // Process message
-   * }
-   * ```
+   * @param origin - The origin to validate
+   * @returns True if the origin is allowed, false otherwise
+   * @private
    */
   private isOriginAllowed(origin: string): boolean {
     try {
@@ -120,12 +125,21 @@ export class MessageManager {
 
   /**
    * Sends a payment request message to the parent window and waits for response.
+   * Supports two modes of operation:
+   * - Iframe mode: Uses postMessage API for communication
+   * - Redirect mode: Uses URL parameters and page redirects
    *
    * @param address - The recipient's blockchain address
-   * @param config - Payment configuration options
+   * @param config - Payment configuration options including amount, currency, memo, and redirectUrl
    * @returns Promise that resolves with payment response containing txHash and chainId
-   * @throws {Error} If payment is cancelled ("Payment was cancelled"), times out ("Payment request timed out"),
-   *                 is sent outside an iframe, or to an invalid origin
+   * @throws {Error} If:
+   *   - Payment is cancelled ("Payment was cancelled")
+   *   - Payment times out ("Payment request timed out") after 5 minutes
+   *   - Memo exceeds maximum size of 32 bytes
+   *   - Currency is invalid
+   *   - Amount is not a positive number
+   *   - Running outside iframe without redirectUrl
+   *   - Message is sent to an invalid origin
    *
    * @example
    * ```typescript
@@ -133,7 +147,8 @@ export class MessageManager {
    *   const response = await messaging.sendPaymentRequest('0x123...', {
    *     amount: 100,
    *     currency: FiatCurrency.USD,
-   *     memo: 'Premium subscription'
+   *     memo: 'Premium subscription',
+   *     redirectUrl: 'https://myapp.com/callback' // Required when not in iframe
    *   });
    *
    *   // Handle successful payment
@@ -155,72 +170,54 @@ export class MessageManager {
     config: PaymentConfig,
   ): Promise<PaymentResponseMessage['payload']> {
     return new Promise((resolve, reject) => {
-      // First try to recover any pending payment
-      this.recoverPendingPayment()
-        .then((recoveredPayment) => {
-          if (recoveredPayment) {
-            resolve(recoveredPayment);
-            return;
-          }
+      // Validate memo size
+      if (config.memo && !isValidMemoSize(config.memo)) {
+        reject(new Error('Memo exceeds maximum size of 32 bytes'));
+        return;
+      }
 
-          // Continue with normal payment flow if no recovery
-          // Validate memo size
-          if (config.memo && !isValidMemoSize(config.memo)) {
-            reject(new Error('Memo exceeds maximum size of 32 bytes'));
-            return;
-          }
+      // Validate currency
+      if (!isValidFiatCurrency(config.currency)) {
+        reject(
+          new Error(
+            `Invalid currency "${config.currency}". Must be one of: ${Object.values(FiatCurrency).join(', ')}`,
+          ),
+        );
+        return;
+      }
 
-          // Validate currency
-          if (!isValidFiatCurrency(config.currency)) {
-            reject(
-              new Error(
-                `Invalid currency "${config.currency}". Must be one of: ${Object.values(FiatCurrency).join(', ')}`,
-              ),
-            );
-            return;
-          }
+      // Validate amount
+      if (typeof config.amount !== 'number' || config.amount <= 0) {
+        reject(new Error('Amount must be a positive number'));
+        return;
+      }
 
-          // Validate amount
-          if (typeof config.amount !== 'number' || config.amount <= 0) {
-            reject(new Error('Amount must be a positive number'));
-            return;
-          }
+      const message: PaymentMessage = {
+        type: MESSAGE_TYPE.REQUEST,
+        payload: {
+          address,
+          amount: config.amount,
+          currency: config.currency,
+          memo: config.memo,
+        },
+      };
 
-          const message: PaymentMessage = {
-            type: MESSAGE_TYPE.REQUEST,
-            payload: {
-              address,
-              amount: config.amount,
-              currency: config.currency,
-              memo: config.memo,
-            },
-          };
+      // Check if running in iframe
+      if (isInIframe()) {
+        this.handleIframePayment(message, resolve, reject);
+        return;
+      }
 
-          // Check if running in iframe
-          if (isInIframe()) {
-            this.handleIframePayment(message, resolve, reject);
-            return;
-          }
+      if (!config.redirectUrl) {
+        reject(
+          new Error(
+            'Redirect URL is required when running outside of an iframe',
+          ),
+        );
+        return;
+      }
 
-          if (!config.redirectUrl) {
-            reject(
-              new Error(
-                'Redirect URL is required when running outside of an iframe',
-              ),
-            );
-            return;
-          }
-
-          this.handleRedirectPayment(
-            message,
-            config.redirectUrl,
-            resolve,
-            reject,
-          );
-        })
-        .catch((error) => {
-          reject(error);
-        });
+      this.handleRedirectPayment(message, config.redirectUrl, resolve, reject);
     });
   }
 
@@ -352,7 +349,7 @@ export class MessageManager {
         // Remove the visibility change listener
         document.removeEventListener('visibilitychange', visibilityHandler);
 
-        if (status === URL_PARAMS.STATUS_SUCCESS && txHash && chainId) {
+        if (txHash && chainId) {
           resolve({
             txHash,
             chainId: parseInt(chainId, 10),
@@ -415,6 +412,15 @@ export class MessageManager {
 
   /**
    * Sends a close message to the parent window.
+   *
+   * @param targetOrigin - The target origin to send the message to
+   * @throws {Error} If the origin is not allowed or if not running in an iframe
+   *
+   * @example
+   * ```typescript
+   * // Close the Yapp iframe
+   * messaging.sendCloseMessage('https://allowed-origin.com');
+   * ```
    */
   public sendCloseMessage(targetOrigin: string): void {
     const message: CloseMessage = {
@@ -425,6 +431,11 @@ export class MessageManager {
 
   /**
    * Internal method to send messages to parent window.
+   *
+   * @param message - The message to send
+   * @param targetOrigin - The target origin to send the message to
+   * @throws {Error} If the origin is not allowed or if not running in an iframe
+   * @private
    */
   private sendMessageToParent(
     message: CloseMessage | PaymentMessage,
@@ -442,81 +453,5 @@ export class MessageManager {
     }
 
     win.parent.postMessage(message, targetOrigin);
-  }
-
-  /**
-   * Attempts to recover an in-progress payment after page reload
-   * @returns Promise that resolves if a payment is recovered and completed
-   */
-  public recoverPendingPayment(): Promise<
-    PaymentResponseMessage['payload'] | null
-  > {
-    return new Promise((resolve, reject) => {
-      // First check if we have URL parameters that indicate a completed payment
-      const urlParams = new URLSearchParams(window.location.search);
-      const txHash = urlParams.get(URL_PARAMS.TX_HASH);
-      const chainId = urlParams.get(URL_PARAMS.CHAIN_ID);
-      const status = urlParams.get(URL_PARAMS.STATUS);
-
-      // If we have transaction data in the URL, return it immediately
-      if (txHash && chainId) {
-        // Clean up URL parameters
-        const cleanUrl = window.location.href.split('?')[0];
-        window.history.replaceState({}, document.title, cleanUrl);
-
-        // Clean up storage
-        sessionStorage.removeItem(STORAGE_KEY);
-
-        resolve({
-          txHash,
-          chainId: parseInt(chainId, 10),
-        });
-        return;
-      }
-
-      // If payment was cancelled via URL params
-      if (status === URL_PARAMS.STATUS_CANCELLED) {
-        // Clean up URL parameters
-        const cleanUrl = window.location.href.split('?')[0];
-        window.history.replaceState({}, document.title, cleanUrl);
-
-        // Clean up storage
-        sessionStorage.removeItem(STORAGE_KEY);
-
-        reject(new Error('Payment was cancelled'));
-        return;
-      }
-
-      // Continue with existing session storage recovery logic
-      const storedPayment = sessionStorage.getItem(STORAGE_KEY);
-      if (!storedPayment) {
-        resolve(null);
-        return;
-      }
-
-      try {
-        const payment = JSON.parse(storedPayment);
-        const now = Date.now();
-
-        // Check if the payment request is still valid (not expired)
-        if (payment.timestamp && now - payment.timestamp > PAYMENT_TIMEOUT_MS) {
-          sessionStorage.removeItem(STORAGE_KEY);
-          resolve(null);
-          return;
-        }
-
-        // If we have a memo, set up the return handler
-        if (payment.memo) {
-          this.setupReturnUrlHandler(payment.memo, resolve, reject);
-        } else {
-          sessionStorage.removeItem(STORAGE_KEY);
-          resolve(null);
-        }
-      } catch (error) {
-        console.warn('Failed to recover payment:', error);
-        sessionStorage.removeItem(STORAGE_KEY);
-        resolve(null);
-      }
-    });
   }
 }
