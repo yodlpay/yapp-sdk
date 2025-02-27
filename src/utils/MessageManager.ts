@@ -226,6 +226,8 @@ export class MessageManager {
     resolve: (value: PaymentResponseMessage['payload']) => void,
     reject: (reason: Error) => void,
   ): void {
+    console.info(`Handling iframe payment for ${message.payload.address}`);
+
     // Add listener for payment success
     const successListeners =
       this.messageListeners.get(MESSAGE_TYPE.SUCCESS) || [];
@@ -269,6 +271,8 @@ export class MessageManager {
     resolve: (value: PaymentResponseMessage['payload']) => void,
     reject: (reason: Error) => void,
   ): void {
+    console.info(`Handling redirect payment for ${message.payload.address}`);
+
     // Generate or use existing memo
     const memo =
       message.payload.memo || createValidMemoFromUUID(message.payload.address);
