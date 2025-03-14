@@ -4,6 +4,10 @@
   "description": "SDK for building Yodl Yapps",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yodlpay/yapp-sdk.git"
+  },
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
