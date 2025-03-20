@@ -30,7 +30,10 @@ const server = http.createServer((req, res) => {
 
   // Special handling for the SDK dist folder
   if (pathname.includes('/dist/')) {
-    pathname = pathname.replace(path.join(__dirname, '/dist'), path.join(__dirname, '..', '/dist'));
+    pathname = pathname.replace(
+      path.join(__dirname, '/dist'),
+      path.join(__dirname, '..', '/dist'),
+    );
   }
 
   // Check if file exists

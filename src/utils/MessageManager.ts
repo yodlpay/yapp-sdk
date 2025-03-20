@@ -137,7 +137,7 @@ export class MessageManager {
    * ```typescript
    * try {
    *   const userContext = await messaging.getUserContext();
-   *   
+   *
    *   // Handle successful response
    *   console.log('User address:', userContext.address);
    *   console.log('Primary ENS:', userContext.primaryEnsName);
@@ -160,7 +160,8 @@ export class MessageManager {
       }
 
       // Set up listener for the response
-      const listeners = this.messageListeners.get('USER_CONTEXT_RESPONSE') || [];
+      const listeners =
+        this.messageListeners.get('USER_CONTEXT_RESPONSE') || [];
       listeners.push((response) => {
         resolve(response.payload);
       });
@@ -168,9 +169,10 @@ export class MessageManager {
 
       // Set timeout (5 second)
       const timeoutId = setTimeout(() => {
-        const remainingListeners = this.messageListeners.get('USER_CONTEXT_RESPONSE') || [];
+        const remainingListeners =
+          this.messageListeners.get('USER_CONTEXT_RESPONSE') || [];
         const filteredListeners = remainingListeners.filter(
-          (l) => !listeners.includes(l)
+          (l) => !listeners.includes(l),
         );
 
         if (filteredListeners.length > 0) {
@@ -184,7 +186,7 @@ export class MessageManager {
 
       // Send the request
       const message: UserContextRequestMessage = {
-        type: 'USER_CONTEXT_REQUEST'
+        type: 'USER_CONTEXT_REQUEST',
       };
 
       win.parent.postMessage(message, this.allowedOrigin);

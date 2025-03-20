@@ -46,7 +46,6 @@ export interface PaymentCancelledMessage extends BaseMessage {
   type: 'PAYMENT_CANCELLED';
 }
 
-
 /**
  * Message received when payment is successful
  */
@@ -54,7 +53,7 @@ export interface UserContextResponseMessage extends BaseMessage {
   type: 'USER_CONTEXT_RESPONSE';
   payload: {
     address: string; // Transaction hash
-    primaryEnsName?: string; // primary ENS name of user    
+    primaryEnsName?: string; // primary ENS name of user
     communityAddress?: string; // Community ENS name
     communityEnsName?: string; // Community ENS name
     communityUserEnsName?: string; // community ENS name of user
