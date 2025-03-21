@@ -130,7 +130,7 @@ export class MessageManager {
    *
    * @returns Promise that resolves with user context information including address, ENS names, and community details
    * @throws {Error} If:
-   *   - Request times out ("User context request timed out") after 30 seconds
+   *   - Request times out ("User context request timed out") after 5 seconds
    *   - Message is sent to an invalid origin
    *
    * @example
@@ -141,10 +141,16 @@ export class MessageManager {
    *   // Handle successful response
    *   console.log('User address:', userContext.address);
    *   console.log('Primary ENS:', userContext.primaryEnsName);
-   *   console.log('Community ENS:', userContext.communityEnsName);
+   *
+   *   // Handle nested community object
+   *   if (userContext.community) {
+   *     console.log('Community address:', userContext.community.address);
+   *     console.log('Community ENS:', userContext.community.ensName);
+   *     console.log('Community User ENS:', userContext.community.userEnsName);
+   *   }
    * } catch (error) {
    *   if (error.message === 'User context request timed out') {
-   *     console.log('Request timed out after 30 seconds');
+   *     console.log('Request timed out after 5 seconds');
    *   } else {
    *     console.error('Failed to get user context:', error);
    *   }

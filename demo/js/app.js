@@ -132,12 +132,14 @@ async function getUserContext() {
     log(`User context received:`, 'success');
     log(`Address: ${context.address}`);
     if (context.primaryEnsName) log(`Primary ENS: ${context.primaryEnsName}`);
-    if (context.communityAddress)
-      log(`Community Address: ${context.communityAddress}`);
-    if (context.communityEnsName)
-      log(`Community ENS: ${context.communityEnsName}`);
-    if (context.communityUserEnsName)
-      log(`Community User ENS: ${context.communityUserEnsName}`);
+
+    // Handle new community object structure
+    if (context.community) {
+      log('Community Information:');
+      log(`  Community Address: ${context.community.address}`);
+      log(`  Community ENS: ${context.community.ensName}`);
+      log(`  Community User ENS: ${context.community.userEnsName}`);
+    }
   } catch (error) {
     log(`Failed to get user context: ${error.message}`, 'error');
   }

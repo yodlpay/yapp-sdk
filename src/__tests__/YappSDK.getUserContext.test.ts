@@ -53,13 +53,15 @@ describe('YappSDK.getUserContext', () => {
   });
 
   it('should call MessageManager.getUserContext and return the result', async () => {
-    // Setup mock response
+    // Setup mock response with new nested community structure
     const mockUserContext = {
       address: TEST_CONSTANTS.USER_ADDRESS,
       primaryEnsName: TEST_CONSTANTS.PRIMARY_ENS,
-      communityAddress: TEST_CONSTANTS.COMMUNITY_ADDRESS,
-      communityEnsName: TEST_CONSTANTS.COMMUNITY_ENS,
-      communityUserEnsName: TEST_CONSTANTS.COMMUNITY_USER_ENS,
+      community: {
+        address: TEST_CONSTANTS.COMMUNITY_ADDRESS,
+        ensName: TEST_CONSTANTS.COMMUNITY_ENS,
+        userEnsName: TEST_CONSTANTS.COMMUNITY_USER_ENS,
+      },
     };
 
     mockGetUserContext.mockResolvedValue(mockUserContext);
@@ -96,5 +98,59 @@ describe('YappSDK.getUserContext', () => {
     await expect(sdk.getUserContext()).rejects.toThrow(
       'User context request timed out',
     );
+  });
+
+  it('should handle response with null community', async () => {
+    // Setup mock response with null community
+    const mockUserContext = {
+      address: TEST_CONSTANTS.USER_ADDRESS,
+      primaryEnsName: TEST_CONSTANTS.PRIMARY_ENS,
+      community: null,
+    };
+
+    mockGetUserContext.mockResolvedValue(mockUserContext);
+
+    // Create the SDK instance
+    const sdk = new MockYappSDK({
+      ensName: TEST_CONSTANTS.ENS_NAME,
+      origin: TEST_CONSTANTS.ORIGIN,
+    });
+
+    // Call getUserContext and get the result
+    const result = await sdk.getUserContext();
+
+    // Verify MessageManager.getUserContext was called
+    expect(mockGetUserContext).toHaveBeenCalled();
+
+    // Verify the result
+    expect(result).toEqual(mockUserContext);
+    expect(result.community).toBeNull();
+  });
+
+  it('should handle response with undefined community', async () => {
+    // Setup mock response with undefined community
+    const mockUserContext = {
+      address: TEST_CONSTANTS.USER_ADDRESS,
+      primaryEnsName: TEST_CONSTANTS.PRIMARY_ENS,
+      // community is intentionally omitted
+    };
+
+    mockGetUserContext.mockResolvedValue(mockUserContext);
+
+    // Create the SDK instance
+    const sdk = new MockYappSDK({
+      ensName: TEST_CONSTANTS.ENS_NAME,
+      origin: TEST_CONSTANTS.ORIGIN,
+    });
+
+    // Call getUserContext and get the result
+    const result = await sdk.getUserContext();
+
+    // Verify MessageManager.getUserContext was called
+    expect(mockGetUserContext).toHaveBeenCalled();
+
+    // Verify the result
+    expect(result).toEqual(mockUserContext);
+    expect(result.community).toBeUndefined();
   });
 });

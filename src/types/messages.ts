@@ -47,16 +47,23 @@ export interface PaymentCancelledMessage extends BaseMessage {
 }
 
 /**
- * Message received when payment is successful
+ * Community information structure
+ */
+export interface Community {
+  address: string;
+  ensName: string;
+  userEnsName: string;
+}
+
+/**
+ * Message received when user context is requested
  */
 export interface UserContextResponseMessage extends BaseMessage {
   type: 'USER_CONTEXT_RESPONSE';
   payload: {
-    address: string; // Transaction hash
-    primaryEnsName?: string; // primary ENS name of user
-    communityAddress?: string; // Community ENS name
-    communityEnsName?: string; // Community ENS name
-    communityUserEnsName?: string; // community ENS name of user
+    address: string; // User's blockchain address
+    primaryEnsName?: string; // Primary ENS name of user
+    community?: Community | null; // Community information (null if not in a community)
   };
 }
 /**

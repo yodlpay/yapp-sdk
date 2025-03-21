@@ -14,6 +14,15 @@ describe('UserContext', () => {
     removeEventListener: jest.fn(),
   };
 
+  // Define test constants for easier maintenance
+  const TEST_DATA = {
+    USER_ADDRESS: '0x123456789abcdef',
+    PRIMARY_ENS: 'user.eth',
+    COMMUNITY_ADDRESS: '0xabcdef123456789',
+    COMMUNITY_ENS: 'community.eth',
+    COMMUNITY_USER_ENS: 'user.community.eth',
+  };
+
   beforeEach(() => {
     // Reset all mocks
     jest.resetAllMocks();
@@ -69,6 +78,107 @@ describe('UserContext', () => {
 
       // We don't test the actual response here, just that interaction with the
       // window APIs is happening correctly
+    });
+
+    it('should process response with nested community structure correctly', async () => {
+      const messageManager = new MessageManager('https://test-origin.com');
+
+      // Start the request
+      const contextPromise = messageManager.getUserContext();
+
+      // Get the message listener function
+      const messageListener = mockWindow.addEventListener.mock.calls[0][1];
+
+      // Create a mock response message with the new nested community structure
+      const mockResponse = {
+        type: 'USER_CONTEXT_RESPONSE',
+        payload: {
+          address: TEST_DATA.USER_ADDRESS,
+          primaryEnsName: TEST_DATA.PRIMARY_ENS,
+          community: {
+            address: TEST_DATA.COMMUNITY_ADDRESS,
+            ensName: TEST_DATA.COMMUNITY_ENS,
+            userEnsName: TEST_DATA.COMMUNITY_USER_ENS,
+          },
+        },
+      };
+
+      // Simulate receiving the message from the correct origin
+      messageListener({
+        origin: 'https://test-origin.com',
+        data: mockResponse,
+      });
+
+      // Get the result and verify it contains the expected data
+      const result = await contextPromise;
+      expect(result).toEqual(mockResponse.payload);
+      expect(result.community).toEqual({
+        address: TEST_DATA.COMMUNITY_ADDRESS,
+        ensName: TEST_DATA.COMMUNITY_ENS,
+        userEnsName: TEST_DATA.COMMUNITY_USER_ENS,
+      });
+    });
+
+    it('should process response with null community correctly', async () => {
+      const messageManager = new MessageManager('https://test-origin.com');
+
+      // Start the request
+      const contextPromise = messageManager.getUserContext();
+
+      // Get the message listener function
+      const messageListener = mockWindow.addEventListener.mock.calls[0][1];
+
+      // Create a mock response message with null community
+      const mockResponse = {
+        type: 'USER_CONTEXT_RESPONSE',
+        payload: {
+          address: TEST_DATA.USER_ADDRESS,
+          primaryEnsName: TEST_DATA.PRIMARY_ENS,
+          community: null,
+        },
+      };
+
+      // Simulate receiving the message from the correct origin
+      messageListener({
+        origin: 'https://test-origin.com',
+        data: mockResponse,
+      });
+
+      // Get the result and verify it contains the expected data
+      const result = await contextPromise;
+      expect(result).toEqual(mockResponse.payload);
+      expect(result.community).toBeNull();
+    });
+
+    it('should process response with undefined community correctly', async () => {
+      const messageManager = new MessageManager('https://test-origin.com');
+
+      // Start the request
+      const contextPromise = messageManager.getUserContext();
+
+      // Get the message listener function
+      const messageListener = mockWindow.addEventListener.mock.calls[0][1];
+
+      // Create a mock response message with no community property
+      const mockResponse = {
+        type: 'USER_CONTEXT_RESPONSE',
+        payload: {
+          address: TEST_DATA.USER_ADDRESS,
+          primaryEnsName: TEST_DATA.PRIMARY_ENS,
+          // community is intentionally omitted
+        },
+      };
+
+      // Simulate receiving the message from the correct origin
+      messageListener({
+        origin: 'https://test-origin.com',
+        data: mockResponse,
+      });
+
+      // Get the result and verify it contains the expected data
+      const result = await contextPromise;
+      expect(result).toEqual(mockResponse.payload);
+      expect(result.community).toBeUndefined();
     });
   });
 });
