@@ -45,3 +45,30 @@ export interface PaymentResponseMessage extends BaseMessage {
 export interface PaymentCancelledMessage extends BaseMessage {
   type: 'PAYMENT_CANCELLED';
 }
+
+/**
+ * Community information structure
+ */
+export interface Community {
+  address: string;
+  ensName: string;
+  userEnsName: string;
+}
+
+/**
+ * Message received when user context is requested
+ */
+export interface UserContextResponseMessage extends BaseMessage {
+  type: 'USER_CONTEXT_RESPONSE';
+  payload: {
+    address: string; // User's blockchain address
+    primaryEnsName?: string; // Primary ENS name of user
+    community?: Community | null; // Community information (null if not in a community)
+  };
+}
+/**
+ * Message received when payment is successful
+ */
+export interface UserContextRequestMessage extends BaseMessage {
+  type: 'USER_CONTEXT_REQUEST';
+}

@@ -5,7 +5,9 @@ import {
   YappSDKConfig,
   YappSDKConfigPublic,
 } from './types/config';
+import { FiatCurrency } from './types/currency';
 import { JWTPayload } from './types/jwt';
+import { UserContextResponseMessage } from './types/messages';
 import { MessageManager } from './utils/MessageManager';
 import { isInIframe } from './utils/isInIframe';
 
@@ -201,6 +203,19 @@ class YappSDK {
   }
 
   /**
+   * Get user context information from the parent window.
+   *
+   * @returns Promise that resolves with user context information
+   * @throws {Error} If the SDK is not initialized or request times out
+   */
+  public async getUserContext(): Promise<
+    UserContextResponseMessage['payload']
+  > {
+    this.ensureInitialized();
+    return await this.messaging.getUserContext();
+  }
+
+  /**
    * Parses payment information from URL parameters.
    * This is useful when implementing a redirect flow where users complete payments in a new tab.
    *
@@ -249,6 +264,8 @@ class YappSDK {
   }
 }
 
+// Export FiatCurrency for convenience
+export { FiatCurrency };
 export { isInIframe };
 
 export default YappSDK;
