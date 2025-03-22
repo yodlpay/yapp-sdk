@@ -7,9 +7,10 @@ import {
 } from './types/config';
 import { FiatCurrency } from './types/currency';
 import { JWTPayload } from './types/jwt';
-import { UserContextResponseMessage } from './types/messages';
 import { MessageManager } from './utils/MessageManager';
 import { isInIframe } from './utils/isInIframe';
+import { Payment, UserContext } from './types/messagePayload';
+import { Hex } from './types/utils';
 
 /**
  * Error thrown when JWT audience validation fails.
@@ -21,14 +22,6 @@ export class JWTAudError extends Error {
     super(message);
     this.name = 'JWTAudError';
   }
-}
-
-/**
- * Payment response containing transaction details
- */
-export interface PaymentResponse {
-  txHash: string;
-  chainId: number;
 }
 
 /**
@@ -195,9 +188,9 @@ class YappSDK {
    * ```
    */
   public async requestPayment(
-    address: string,
+    address: Hex,
     config: PaymentConfig,
-  ): Promise<PaymentResponse> {
+  ): Promise<Payment> {
     this.ensureInitialized();
     return await this.messaging.sendPaymentRequest(address, config);
   }
@@ -208,9 +201,7 @@ class YappSDK {
    * @returns Promise that resolves with user context information
    * @throws {Error} If the SDK is not initialized or request times out
    */
-  public async getUserContext(): Promise<
-    UserContextResponseMessage['payload']
-  > {
+  public async getUserContext(): Promise<UserContext> {
     this.ensureInitialized();
     return await this.messaging.getUserContext();
   }
@@ -235,10 +226,10 @@ class YappSDK {
    * }
    * ```
    */
-  public parsePaymentFromUrl(): PaymentResponse | null {
+  public parsePaymentFromUrl(): Payment | null {
     // Extract URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const txHash = urlParams.get('txHash');
+    const txHash = urlParams.get('txHash') as Hex;
     const chainId = urlParams.get('chainId');
 
     // If we have transaction data in the URL, return it
@@ -267,5 +258,6 @@ class YappSDK {
 // Export FiatCurrency for convenience
 export { FiatCurrency };
 export { isInIframe };
+export * from './types';
 
 export default YappSDK;

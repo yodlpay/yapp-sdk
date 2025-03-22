@@ -27,20 +27,14 @@ Here's a focused example demonstrating how to create payments with the YappSDK:
 
 ```tsx
 import React, { useState, useEffect } from 'react';
-import YappSDK, {
-  FiatCurrency,
-  PaymentResponse,
-  isInIframe,
-} from '@yodlpay/yapp-sdk';
+import YappSDK, { FiatCurrency, Payment, isInIframe } from '@yodlpay/yapp-sdk';
 
 const sdk = new YappSDK({
   ensName: 'my-yapp.eth',
 });
 
 function PaymentExample() {
-  const [paymentResult, setPaymentResult] = useState<PaymentResponse | null>(
-    null,
-  );
+  const [paymentResult, setPaymentResult] = useState<Payment | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
