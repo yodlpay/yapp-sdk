@@ -2,6 +2,7 @@ import { PaymentConfig } from '../types/config';
 import { FiatCurrency } from '../types/currency';
 import { Payment, UserContext } from '../types/messagePayload';
 import { createMessage, Message, MESSAGE_TYPE } from '../types/messagesNew';
+import { Hex } from '../types/utils';
 import { isValidFiatCurrency } from './currencyValidation';
 import { isInIframe } from './isInIframe';
 import { createValidMemoFromUUID, isValidMemoSize } from './memoValidation';
@@ -230,7 +231,7 @@ export class MessageManager {
    * ```
    */
   public sendPaymentRequest(
-    address: string,
+    address: Hex,
     config: PaymentConfig,
   ): Promise<Payment> {
     return new Promise((resolve, reject) => {
@@ -399,7 +400,7 @@ export class MessageManager {
       const urlParams = new URLSearchParams(window.location.search);
       const returnedMemo = urlParams.get(URL_PARAMS.MEMO);
       const status = urlParams.get(URL_PARAMS.STATUS);
-      const txHash = urlParams.get(URL_PARAMS.TX_HASH);
+      const txHash = urlParams.get(URL_PARAMS.TX_HASH) as Hex;
       const chainId = urlParams.get(URL_PARAMS.CHAIN_ID);
 
       // Only process if this is our memo

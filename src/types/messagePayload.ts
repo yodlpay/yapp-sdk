@@ -1,10 +1,11 @@
 import { FiatCurrency } from './currency';
+import { Hex } from './utils';
 
 /**
  * Payment request payload
  */
 export interface PaymentRequest {
-  address: string; // Recipient's blockchain address
+  address: Hex; // Recipient's blockchain address
   amount: number; // Payment amount
   currency: FiatCurrency; // Payment currency
   memo?: string; // Optional payment description
@@ -14,7 +15,7 @@ export interface PaymentRequest {
  * Payment response payload
  */
 export interface Payment {
-  txHash: string; // Transaction hash
+  txHash: Hex; // Transaction hash
   chainId: number; // Chain ID where transaction was executed
 }
 
@@ -22,7 +23,7 @@ export interface Payment {
  * Community information structure
  */
 export interface Community {
-  address: string;
+  address: Hex;
   ensName: string;
   userEnsName: string;
 }
