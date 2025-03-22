@@ -2,8 +2,10 @@ import { PaymentConfig } from '../types/config';
 import { FiatCurrency } from '../types/currency';
 import {
   CloseMessage,
-  PaymentMessage,
+  Payment,
+  PaymentRequestMessage,
   PaymentResponseMessage,
+  UserContext,
   UserContextRequestMessage,
   UserContextResponseMessage,
 } from '../types/messages';
@@ -13,12 +15,16 @@ import { createValidMemoFromUUID, isValidMemoSize } from './memoValidation';
 import { getSafeWindow, isBrowser } from './safeWindow';
 
 // Message types
-const MESSAGE_TYPE = {
-  REQUEST: 'PAYMENT_REQUEST',
-  SUCCESS: 'PAYMENT_SUCCESS',
-  CANCELLED: 'PAYMENT_CANCELLED',
+export const MESSAGE_TYPE = {
+  PAYMENT_REQUEST: 'PAYMENT_REQUEST',
+  PAYMENT_SUCCESS: 'PAYMENT_SUCCESS',
+  PAYMENT_CANCELLED: 'PAYMENT_CANCELLED',
   CLOSE: 'CLOSE',
+  USER_CONTEXT_REQUEST: 'USER_CONTEXT_REQUEST',
+  USER_CONTEXT_RESPONSE: 'USER_CONTEXT_RESPONSE',
 } as const;
+
+export type MessageType = (typeof MESSAGE_TYPE)[keyof typeof MESSAGE_TYPE];
 
 // Configuration constants
 const PAYMENT_TIMEOUT_MS = 300000; // 5 minutes
@@ -157,7 +163,7 @@ export class MessageManager {
    * }
    * ```
    */
-  public getUserContext(): Promise<UserContextResponseMessage['payload']> {
+  public getUserContext(): Promise<UserContext> {
     return new Promise((resolve, reject) => {
       const win = getSafeWindow();
       if (!win || !win.parent) {
@@ -167,24 +173,27 @@ export class MessageManager {
 
       // Set up listener for the response
       const listeners =
-        this.messageListeners.get('USER_CONTEXT_RESPONSE') || [];
+        this.messageListeners.get(MESSAGE_TYPE.USER_CONTEXT_RESPONSE) || [];
       listeners.push((response) => {
         resolve(response.payload);
       });
-      this.messageListeners.set('USER_CONTEXT_RESPONSE', listeners);
+      this.messageListeners.set(MESSAGE_TYPE.USER_CONTEXT_RESPONSE, listeners);
 
       // Set timeout (5 second)
       const timeoutId = setTimeout(() => {
         const remainingListeners =
-          this.messageListeners.get('USER_CONTEXT_RESPONSE') || [];
+          this.messageListeners.get(MESSAGE_TYPE.USER_CONTEXT_RESPONSE) || [];
         const filteredListeners = remainingListeners.filter(
           (l) => !listeners.includes(l),
         );
 
         if (filteredListeners.length > 0) {
-          this.messageListeners.set('USER_CONTEXT_RESPONSE', filteredListeners);
+          this.messageListeners.set(
+            MESSAGE_TYPE.USER_CONTEXT_RESPONSE,
+            filteredListeners,
+          );
         } else {
-          this.messageListeners.delete('USER_CONTEXT_RESPONSE');
+          this.messageListeners.delete(MESSAGE_TYPE.USER_CONTEXT_RESPONSE);
         }
 
         reject(new Error('User context request timed out'));
@@ -192,7 +201,7 @@ export class MessageManager {
 
       // Send the request
       const message: UserContextRequestMessage = {
-        type: 'USER_CONTEXT_REQUEST',
+        type: MESSAGE_TYPE.USER_CONTEXT_REQUEST,
       };
 
       win.parent.postMessage(message, this.allowedOrigin);
@@ -244,7 +253,7 @@ export class MessageManager {
   public sendPaymentRequest(
     address: string,
     config: PaymentConfig,
-  ): Promise<PaymentResponseMessage['payload']> {
+  ): Promise<Payment> {
     return new Promise((resolve, reject) => {
       // Validate memo size
       if (config.memo && !isValidMemoSize(config.memo)) {
@@ -268,8 +277,8 @@ export class MessageManager {
         return;
       }
 
-      const message: PaymentMessage = {
-        type: MESSAGE_TYPE.REQUEST,
+      const message: PaymentRequestMessage = {
+        type: MESSAGE_TYPE.PAYMENT_REQUEST,
         payload: {
           address,
           amount: config.amount,
@@ -298,40 +307,40 @@ export class MessageManager {
   }
 
   private handleIframePayment(
-    message: PaymentMessage,
-    resolve: (value: PaymentResponseMessage['payload']) => void,
+    message: PaymentRequestMessage,
+    resolve: (value: Payment) => void,
     reject: (reason: Error) => void,
   ): void {
     console.info(`Handling iframe payment for ${message.payload.address}`);
 
     // Add listener for payment success
     const successListeners =
-      this.messageListeners.get(MESSAGE_TYPE.SUCCESS) || [];
+      this.messageListeners.get(MESSAGE_TYPE.PAYMENT_SUCCESS) || [];
     const timeout = this.setupPaymentTimeout(reject);
 
     successListeners.push((response: PaymentResponseMessage) => {
       clearTimeout(timeout);
-      this.messageListeners.delete(MESSAGE_TYPE.CANCELLED);
+      this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_CANCELLED);
       resolve(response.payload);
     });
-    this.messageListeners.set(MESSAGE_TYPE.SUCCESS, successListeners);
+    this.messageListeners.set(MESSAGE_TYPE.PAYMENT_SUCCESS, successListeners);
 
     // Add listener for payment cancellation
     const cancelListeners =
-      this.messageListeners.get(MESSAGE_TYPE.CANCELLED) || [];
+      this.messageListeners.get(MESSAGE_TYPE.PAYMENT_CANCELLED) || [];
     cancelListeners.push(() => {
       clearTimeout(timeout);
-      this.messageListeners.delete(MESSAGE_TYPE.SUCCESS);
+      this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_SUCCESS);
       reject(new Error('Payment was cancelled'));
     });
-    this.messageListeners.set(MESSAGE_TYPE.CANCELLED, cancelListeners);
+    this.messageListeners.set(MESSAGE_TYPE.PAYMENT_CANCELLED, cancelListeners);
 
     try {
       this.sendMessageToParent(message, this.allowedOrigin);
     } catch (error) {
       clearTimeout(timeout);
-      this.messageListeners.delete(MESSAGE_TYPE.SUCCESS);
-      this.messageListeners.delete(MESSAGE_TYPE.CANCELLED);
+      this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_SUCCESS);
+      this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_CANCELLED);
 
       if (error instanceof Error) {
         reject(error);
@@ -342,9 +351,9 @@ export class MessageManager {
   }
 
   private handleRedirectPayment(
-    message: PaymentMessage,
+    message: PaymentRequestMessage,
     redirectUrl: string,
-    resolve: (value: PaymentResponseMessage['payload']) => void,
+    resolve: (value: Payment) => void,
     reject: (reason: Error) => void,
   ): void {
     console.info(`Handling redirect payment for ${message.payload.address}`);
@@ -406,7 +415,7 @@ export class MessageManager {
 
   private setupReturnUrlHandler(
     memo: string,
-    resolve: (value: PaymentResponseMessage['payload']) => void,
+    resolve: (value: Payment) => void,
     reject: (reason: Error) => void,
   ): void {
     // Create a function to handle URL parameters
@@ -482,8 +491,8 @@ export class MessageManager {
   private setupPaymentTimeout(reject: (reason: Error) => void): NodeJS.Timeout {
     return setTimeout(
       () => {
-        this.messageListeners.delete(MESSAGE_TYPE.SUCCESS);
-        this.messageListeners.delete(MESSAGE_TYPE.CANCELLED);
+        this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_SUCCESS);
+        this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_CANCELLED);
         reject(new Error('Payment request timed out'));
       },
       process.env.NODE_ENV === 'test' ? TEST_TIMEOUT_MS : PAYMENT_TIMEOUT_MS,
@@ -518,7 +527,7 @@ export class MessageManager {
    * @private
    */
   private sendMessageToParent(
-    message: CloseMessage | PaymentMessage,
+    message: CloseMessage | PaymentRequestMessage,
     targetOrigin: string,
   ): void {
     if (!this.isOriginAllowed(targetOrigin)) {
