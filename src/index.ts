@@ -258,8 +258,6 @@ class YappSDK {
 // Export FiatCurrency for convenience
 export { FiatCurrency };
 export { isInIframe };
-
-// Re-export all types
 export * from './types';
 
 export default YappSDK;

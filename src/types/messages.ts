@@ -1,66 +1,59 @@
 import { Payment, UserContext, PaymentRequest } from './messagePayload';
 
-/**
- * The definitive map of all message types to their payload types
- * This is our single source of truth
- */
-export const MESSAGE_PAYLOADS = {
-  PAYMENT_REQUEST: {} as PaymentRequest,
+const MESSAGE_RESPONSE_PAYLOADS = {
   PAYMENT_SUCCESS: {} as Payment,
   PAYMENT_CANCELLED: undefined,
-  CLOSE: undefined,
-  USER_CONTEXT_REQUEST: undefined,
   USER_CONTEXT_RESPONSE: {} as UserContext,
 } as const;
 
-export const MESSAGE_TYPE = Object.keys(MESSAGE_PAYLOADS).reduce(
-  (acc, key) => ({ ...acc, [key]: key }),
-  {},
-) as { [K in keyof typeof MESSAGE_PAYLOADS]: K };
+const MESSAGE_REQUEST_PAYLOADS = {
+  PAYMENT_REQUEST: {} as PaymentRequest,
+  USER_CONTEXT_REQUEST: undefined,
+  CLOSE: undefined,
+} as const;
 
-export type MessageType = keyof typeof MESSAGE_PAYLOADS;
+export const MESSAGE_RESPONSE_TYPE = Object.keys(
+  MESSAGE_RESPONSE_PAYLOADS,
+).reduce((acc, key) => ({ ...acc, [key]: key }), {}) as {
+  [K in keyof typeof MESSAGE_RESPONSE_PAYLOADS]: K;
+};
 
-/**
- * Base interface for all message types
- */
-export type Message<T extends MessageType = MessageType> = {
+// export const MESSAGE_REQUEST_TYPE = Object.keys(
+//   MESSAGE_REQUEST_PAYLOADS,
+// ).reduce((acc, key) => ({ ...acc, [key]: key }), {}) as {
+//   [K in keyof typeof MESSAGE_REQUEST_PAYLOADS]: K;
+// };
+
+export type MessageResponseType = keyof typeof MESSAGE_RESPONSE_PAYLOADS;
+export type MessageRequestType = keyof typeof MESSAGE_REQUEST_PAYLOADS;
+
+export type ResponseMessage<
+  T extends MessageResponseType = MessageResponseType,
+> = {
   type: T;
-  payload: (typeof MESSAGE_PAYLOADS)[T];
+  payload: (typeof MESSAGE_RESPONSE_PAYLOADS)[T];
 };
 
-/**
- * Typed message creator functions
- */
-export const createMessage = {
-  PAYMENT_REQUEST: (payload: PaymentRequest): Message<'PAYMENT_REQUEST'> => ({
-    type: 'PAYMENT_REQUEST',
+export type RequestMessage<T extends MessageRequestType = MessageRequestType> =
+  {
+    type: T;
+    payload: (typeof MESSAGE_REQUEST_PAYLOADS)[T];
+  };
+
+export const createResponseMessage = <T extends MessageResponseType>(
+  type: T,
+  payload?: (typeof MESSAGE_RESPONSE_PAYLOADS)[T],
+): ResponseMessage<T> =>
+  ({
+    type,
     payload,
-  }),
+  }) as ResponseMessage<T>;
 
-  PAYMENT_SUCCESS: (payload: Payment): Message<'PAYMENT_SUCCESS'> => ({
-    type: 'PAYMENT_SUCCESS',
+export const createRequestMessage = <T extends MessageRequestType>(
+  type: T,
+  payload?: (typeof MESSAGE_REQUEST_PAYLOADS)[T],
+): RequestMessage<T> =>
+  ({
+    type,
     payload,
-  }),
-
-  PAYMENT_CANCELLED: (): Message<'PAYMENT_CANCELLED'> => ({
-    type: 'PAYMENT_CANCELLED',
-    payload: undefined,
-  }),
-
-  CLOSE: (): Message<'CLOSE'> => ({
-    type: 'CLOSE',
-    payload: undefined,
-  }),
-
-  USER_CONTEXT_REQUEST: (): Message<'USER_CONTEXT_REQUEST'> => ({
-    type: 'USER_CONTEXT_REQUEST',
-    payload: undefined,
-  }),
-
-  USER_CONTEXT_RESPONSE: (
-    payload: UserContext,
-  ): Message<'USER_CONTEXT_RESPONSE'> => ({
-    type: 'USER_CONTEXT_RESPONSE',
-    payload,
-  }),
-};
+  }) as RequestMessage<T>;

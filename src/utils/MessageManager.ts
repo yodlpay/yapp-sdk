@@ -1,7 +1,12 @@
 import { PaymentConfig } from '../types/config';
 import { FiatCurrency } from '../types/currency';
 import { Payment, UserContext } from '../types/messagePayload';
-import { createMessage, Message, MESSAGE_TYPE } from '../types/messages';
+import {
+  createRequestMessage,
+  MESSAGE_RESPONSE_TYPE,
+  RequestMessage,
+  ResponseMessage,
+} from '../types/messages';
 import { Hex } from '../types/utils';
 import { isValidFiatCurrency } from './currencyValidation';
 import { isInIframe } from './isInIframe';
@@ -155,34 +160,43 @@ export class MessageManager {
 
       // Set up listener for the response
       const listeners =
-        this.messageListeners.get(MESSAGE_TYPE.USER_CONTEXT_RESPONSE) || [];
+        this.messageListeners.get(
+          MESSAGE_RESPONSE_TYPE.USER_CONTEXT_RESPONSE,
+        ) || [];
       listeners.push((response) => {
         resolve(response.payload);
       });
-      this.messageListeners.set(MESSAGE_TYPE.USER_CONTEXT_RESPONSE, listeners);
+      this.messageListeners.set(
+        MESSAGE_RESPONSE_TYPE.USER_CONTEXT_RESPONSE,
+        listeners,
+      );
 
       // Set timeout (5 second)
       const timeoutId = setTimeout(() => {
         const remainingListeners =
-          this.messageListeners.get(MESSAGE_TYPE.USER_CONTEXT_RESPONSE) || [];
+          this.messageListeners.get(
+            MESSAGE_RESPONSE_TYPE.USER_CONTEXT_RESPONSE,
+          ) || [];
         const filteredListeners = remainingListeners.filter(
           (l) => !listeners.includes(l),
         );
 
         if (filteredListeners.length > 0) {
           this.messageListeners.set(
-            MESSAGE_TYPE.USER_CONTEXT_RESPONSE,
+            MESSAGE_RESPONSE_TYPE.USER_CONTEXT_RESPONSE,
             filteredListeners,
           );
         } else {
-          this.messageListeners.delete(MESSAGE_TYPE.USER_CONTEXT_RESPONSE);
+          this.messageListeners.delete(
+            MESSAGE_RESPONSE_TYPE.USER_CONTEXT_RESPONSE,
+          );
         }
 
         reject(new Error('User context request timed out'));
       }, 5000);
 
       // Send the request
-      const message = createMessage.USER_CONTEXT_REQUEST();
+      const message = createRequestMessage('USER_CONTEXT_REQUEST');
 
       this.sendMessageToParent(message, this.allowedOrigin);
     });
@@ -230,6 +244,7 @@ export class MessageManager {
    * }
    * ```
    */
+
   public sendPaymentRequest(
     address: Hex,
     config: PaymentConfig,
@@ -257,7 +272,7 @@ export class MessageManager {
         return;
       }
 
-      const message = createMessage.PAYMENT_REQUEST({
+      const message = createRequestMessage('PAYMENT_REQUEST', {
         address,
         amount: config.amount,
         currency: config.currency,
@@ -284,7 +299,7 @@ export class MessageManager {
   }
 
   private handleIframePayment(
-    message: Message<'PAYMENT_REQUEST'>,
+    message: RequestMessage<'PAYMENT_REQUEST'>,
     resolve: (value: Payment) => void,
     reject: (reason: Error) => void,
   ): void {
@@ -292,32 +307,38 @@ export class MessageManager {
 
     // Add listener for payment success
     const successListeners =
-      this.messageListeners.get(MESSAGE_TYPE.PAYMENT_SUCCESS) || [];
+      this.messageListeners.get(MESSAGE_RESPONSE_TYPE.PAYMENT_SUCCESS) || [];
     const timeout = this.setupPaymentTimeout(reject);
 
-    successListeners.push((response: Message<'PAYMENT_SUCCESS'>) => {
+    successListeners.push((response: ResponseMessage<'PAYMENT_SUCCESS'>) => {
       clearTimeout(timeout);
-      this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_CANCELLED);
+      this.messageListeners.delete(MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED);
       resolve(response.payload);
     });
-    this.messageListeners.set(MESSAGE_TYPE.PAYMENT_SUCCESS, successListeners);
+    this.messageListeners.set(
+      MESSAGE_RESPONSE_TYPE.PAYMENT_SUCCESS,
+      successListeners,
+    );
 
     // Add listener for payment cancellation
     const cancelListeners =
-      this.messageListeners.get(MESSAGE_TYPE.PAYMENT_CANCELLED) || [];
+      this.messageListeners.get(MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED) || [];
     cancelListeners.push(() => {
       clearTimeout(timeout);
-      this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_SUCCESS);
+      this.messageListeners.delete(MESSAGE_RESPONSE_TYPE.PAYMENT_SUCCESS);
       reject(new Error('Payment was cancelled'));
     });
-    this.messageListeners.set(MESSAGE_TYPE.PAYMENT_CANCELLED, cancelListeners);
+    this.messageListeners.set(
+      MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED,
+      cancelListeners,
+    );
 
     try {
       this.sendMessageToParent(message, this.allowedOrigin);
     } catch (error) {
       clearTimeout(timeout);
-      this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_SUCCESS);
-      this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_CANCELLED);
+      this.messageListeners.delete(MESSAGE_RESPONSE_TYPE.PAYMENT_SUCCESS);
+      this.messageListeners.delete(MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED);
 
       if (error instanceof Error) {
         reject(error);
@@ -328,7 +349,7 @@ export class MessageManager {
   }
 
   private handleRedirectPayment(
-    message: Message<'PAYMENT_REQUEST'>,
+    message: RequestMessage<'PAYMENT_REQUEST'>,
     redirectUrl: string,
     resolve: (value: Payment) => void,
     reject: (reason: Error) => void,
@@ -468,8 +489,8 @@ export class MessageManager {
   private setupPaymentTimeout(reject: (reason: Error) => void): NodeJS.Timeout {
     return setTimeout(
       () => {
-        this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_SUCCESS);
-        this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_CANCELLED);
+        this.messageListeners.delete(MESSAGE_RESPONSE_TYPE.PAYMENT_SUCCESS);
+        this.messageListeners.delete(MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED);
         reject(new Error('Payment request timed out'));
       },
       process.env.NODE_ENV === 'test' ? TEST_TIMEOUT_MS : PAYMENT_TIMEOUT_MS,
@@ -489,7 +510,7 @@ export class MessageManager {
    * ```
    */
   public sendCloseMessage(targetOrigin: string): void {
-    const message = createMessage.CLOSE();
+    const message = createRequestMessage('CLOSE');
     this.sendMessageToParent(message, targetOrigin);
   }
 
@@ -501,7 +522,10 @@ export class MessageManager {
    * @throws {Error} If the origin is not allowed or if not running in an iframe
    * @private
    */
-  private sendMessageToParent(message: Message, targetOrigin: string): void {
+  private sendMessageToParent(
+    message: RequestMessage | ResponseMessage,
+    targetOrigin: string,
+  ): void {
     if (!this.isOriginAllowed(targetOrigin)) {
       throw new Error(
         `Invalid origin "${targetOrigin}". Expected "${this.allowedOrigin}".`,
