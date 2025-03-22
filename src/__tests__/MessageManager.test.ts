@@ -1,4 +1,5 @@
 import { FiatCurrency } from '../types/currency';
+import { Hex } from '../types/utils';
 import * as isInIframeModule from '../utils/isInIframe';
 import * as memoValidationModule from '../utils/memoValidation';
 import { MessageManager } from '../utils/MessageManager';
@@ -13,10 +14,10 @@ describe('MessageManager', () => {
   // Test constants
   const TEST_CONSTANTS = {
     ORIGIN: 'https://test-origin.com',
-    ADDRESS: '0x123456789abcdef',
+    ADDRESS: '0x123456789abcdef' as Hex,
     MEMO: 'test-memo',
     REDIRECT_URL: 'https://redirect-url.com',
-    TX_HASH: '0xabcdef1234567890',
+    TX_HASH: '0xabcdef1234567890' as Hex,
     CHAIN_ID: 1,
   };
 

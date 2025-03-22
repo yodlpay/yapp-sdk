@@ -1,90 +1,66 @@
-import { MessageType } from '../utils/MessageManager';
-import { FiatCurrency } from './currency';
+import { Payment, UserContext, PaymentRequest } from './messagePayload';
 
 /**
- * Base interface for all message types exchanged between Yapp and parent window
+ * The definitive map of all message types to their payload types
+ * This is our single source of truth
  */
-export interface BaseMessage {
-  type: MessageType;
-  payload?: any;
-}
+export const MESSAGE_PAYLOADS = {
+  PAYMENT_REQUEST: {} as PaymentRequest,
+  PAYMENT_SUCCESS: {} as Payment,
+  PAYMENT_CANCELLED: undefined,
+  CLOSE: undefined,
+  USER_CONTEXT_REQUEST: undefined,
+  USER_CONTEXT_RESPONSE: {} as UserContext,
+} as const;
+
+export const MESSAGE_TYPE = Object.keys(MESSAGE_PAYLOADS).reduce(
+  (acc, key) => ({ ...acc, [key]: key }),
+  {},
+) as { [K in keyof typeof MESSAGE_PAYLOADS]: K };
+
+export type MessageType = keyof typeof MESSAGE_PAYLOADS;
 
 /**
- * Message sent to close the Yapp iframe
+ * Base interface for all message types
  */
-export interface CloseMessage extends BaseMessage {
-  type: 'CLOSE';
-}
+export type Message<T extends MessageType = MessageType> = {
+  type: T;
+  payload: (typeof MESSAGE_PAYLOADS)[T];
+};
 
 /**
- * Payment request payload
+ * Typed message creator functions
  */
-export interface PaymentRequest {
-  address: string; // Recipient's blockchain address
-  amount: number; // Payment amount
-  currency: FiatCurrency; // Payment currency
-  memo?: string; // Optional payment description
-}
+export const createMessage = {
+  PAYMENT_REQUEST: (payload: PaymentRequest): Message<'PAYMENT_REQUEST'> => ({
+    type: 'PAYMENT_REQUEST',
+    payload,
+  }),
 
-/**
- * Message sent to request a payment
- */
-export interface PaymentRequestMessage extends BaseMessage {
-  type: 'PAYMENT_REQUEST';
-  payload: PaymentRequest;
-}
+  PAYMENT_SUCCESS: (payload: Payment): Message<'PAYMENT_SUCCESS'> => ({
+    type: 'PAYMENT_SUCCESS',
+    payload,
+  }),
 
-/**
- * Payment response payload
- */
-export interface Payment {
-  txHash: string; // Transaction hash
-  chainId: number; // Chain ID where transaction was executed
-}
+  PAYMENT_CANCELLED: (): Message<'PAYMENT_CANCELLED'> => ({
+    type: 'PAYMENT_CANCELLED',
+    payload: undefined,
+  }),
 
-/**
- * Message received when payment is successful
- */
-export interface PaymentResponseMessage extends BaseMessage {
-  type: 'PAYMENT_SUCCESS';
-  payload: Payment;
-}
+  CLOSE: (): Message<'CLOSE'> => ({
+    type: 'CLOSE',
+    payload: undefined,
+  }),
 
-/**
- * Message received when payment is cancelled
- */
-export interface PaymentCancelledMessage extends BaseMessage {
-  type: 'PAYMENT_CANCELLED';
-}
+  USER_CONTEXT_REQUEST: (): Message<'USER_CONTEXT_REQUEST'> => ({
+    type: 'USER_CONTEXT_REQUEST',
+    payload: undefined,
+  }),
 
-/**
- * Community information structure
- */
-export interface Community {
-  address: string;
-  ensName: string;
-  userEnsName: string;
-}
-
-/**
- * UserContext response payload
- */
-export interface UserContext {
-  address: string; // User's blockchain address
-  primaryEnsName?: string; // Primary ENS name of user
-  community?: Community | null; // Community information (null if not in a community)
-}
-
-/**
- * Message received when user context is requested
- */
-export interface UserContextResponseMessage extends BaseMessage {
-  type: 'USER_CONTEXT_RESPONSE';
-  payload: UserContext;
-}
-/**
- * Message received when payment is successful
- */
-export interface UserContextRequestMessage extends BaseMessage {
-  type: 'USER_CONTEXT_REQUEST';
-}
+  USER_CONTEXT_RESPONSE: (
+    payload: UserContext,
+  ): Message<'USER_CONTEXT_RESPONSE'> => ({
+    type: 'USER_CONTEXT_RESPONSE',
+    payload,
+  }),
+};

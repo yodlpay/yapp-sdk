@@ -1,30 +1,12 @@
 import { PaymentConfig } from '../types/config';
 import { FiatCurrency } from '../types/currency';
-import {
-  CloseMessage,
-  Payment,
-  PaymentRequestMessage,
-  PaymentResponseMessage,
-  UserContext,
-  UserContextRequestMessage,
-  UserContextResponseMessage,
-} from '../types/messages';
+import { Payment, UserContext } from '../types/messagePayload';
+import { createMessage, Message, MESSAGE_TYPE } from '../types/messages';
+import { Hex } from '../types/utils';
 import { isValidFiatCurrency } from './currencyValidation';
 import { isInIframe } from './isInIframe';
 import { createValidMemoFromUUID, isValidMemoSize } from './memoValidation';
 import { getSafeWindow, isBrowser } from './safeWindow';
-
-// Message types
-export const MESSAGE_TYPE = {
-  PAYMENT_REQUEST: 'PAYMENT_REQUEST',
-  PAYMENT_SUCCESS: 'PAYMENT_SUCCESS',
-  PAYMENT_CANCELLED: 'PAYMENT_CANCELLED',
-  CLOSE: 'CLOSE',
-  USER_CONTEXT_REQUEST: 'USER_CONTEXT_REQUEST',
-  USER_CONTEXT_RESPONSE: 'USER_CONTEXT_RESPONSE',
-} as const;
-
-export type MessageType = (typeof MESSAGE_TYPE)[keyof typeof MESSAGE_TYPE];
 
 // Configuration constants
 const PAYMENT_TIMEOUT_MS = 300000; // 5 minutes
@@ -200,11 +182,9 @@ export class MessageManager {
       }, 5000);
 
       // Send the request
-      const message: UserContextRequestMessage = {
-        type: MESSAGE_TYPE.USER_CONTEXT_REQUEST,
-      };
+      const message = createMessage.USER_CONTEXT_REQUEST();
 
-      win.parent.postMessage(message, this.allowedOrigin);
+      this.sendMessageToParent(message, this.allowedOrigin);
     });
   }
 
@@ -251,7 +231,7 @@ export class MessageManager {
    * ```
    */
   public sendPaymentRequest(
-    address: string,
+    address: Hex,
     config: PaymentConfig,
   ): Promise<Payment> {
     return new Promise((resolve, reject) => {
@@ -277,15 +257,12 @@ export class MessageManager {
         return;
       }
 
-      const message: PaymentRequestMessage = {
-        type: MESSAGE_TYPE.PAYMENT_REQUEST,
-        payload: {
-          address,
-          amount: config.amount,
-          currency: config.currency,
-          memo: config.memo,
-        },
-      };
+      const message = createMessage.PAYMENT_REQUEST({
+        address,
+        amount: config.amount,
+        currency: config.currency,
+        memo: config.memo,
+      });
 
       // Check if running in iframe
       if (isInIframe()) {
@@ -307,7 +284,7 @@ export class MessageManager {
   }
 
   private handleIframePayment(
-    message: PaymentRequestMessage,
+    message: Message<'PAYMENT_REQUEST'>,
     resolve: (value: Payment) => void,
     reject: (reason: Error) => void,
   ): void {
@@ -318,7 +295,7 @@ export class MessageManager {
       this.messageListeners.get(MESSAGE_TYPE.PAYMENT_SUCCESS) || [];
     const timeout = this.setupPaymentTimeout(reject);
 
-    successListeners.push((response: PaymentResponseMessage) => {
+    successListeners.push((response: Message<'PAYMENT_SUCCESS'>) => {
       clearTimeout(timeout);
       this.messageListeners.delete(MESSAGE_TYPE.PAYMENT_CANCELLED);
       resolve(response.payload);
@@ -351,7 +328,7 @@ export class MessageManager {
   }
 
   private handleRedirectPayment(
-    message: PaymentRequestMessage,
+    message: Message<'PAYMENT_REQUEST'>,
     redirectUrl: string,
     resolve: (value: Payment) => void,
     reject: (reason: Error) => void,
@@ -423,7 +400,7 @@ export class MessageManager {
       const urlParams = new URLSearchParams(window.location.search);
       const returnedMemo = urlParams.get(URL_PARAMS.MEMO);
       const status = urlParams.get(URL_PARAMS.STATUS);
-      const txHash = urlParams.get(URL_PARAMS.TX_HASH);
+      const txHash = urlParams.get(URL_PARAMS.TX_HASH) as Hex;
       const chainId = urlParams.get(URL_PARAMS.CHAIN_ID);
 
       // Only process if this is our memo
@@ -512,9 +489,7 @@ export class MessageManager {
    * ```
    */
   public sendCloseMessage(targetOrigin: string): void {
-    const message: CloseMessage = {
-      type: MESSAGE_TYPE.CLOSE,
-    };
+    const message = createMessage.CLOSE();
     this.sendMessageToParent(message, targetOrigin);
   }
 
@@ -526,10 +501,7 @@ export class MessageManager {
    * @throws {Error} If the origin is not allowed or if not running in an iframe
    * @private
    */
-  private sendMessageToParent(
-    message: CloseMessage | PaymentRequestMessage,
-    targetOrigin: string,
-  ): void {
+  private sendMessageToParent(message: Message, targetOrigin: string): void {
     if (!this.isOriginAllowed(targetOrigin)) {
       throw new Error(
         `Invalid origin "${targetOrigin}". Expected "${this.allowedOrigin}".`,
