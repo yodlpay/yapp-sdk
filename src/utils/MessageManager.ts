@@ -196,7 +196,7 @@ export class MessageManager {
       }, 5000);
 
       // Send the request
-      const message = createRequestMessage('USER_CONTEXT_REQUEST');
+      const message = createRequestMessage('USER_CONTEXT_REQUEST', undefined);
 
       this.sendMessageToParent(message, this.allowedOrigin);
     });
@@ -510,7 +510,7 @@ export class MessageManager {
    * ```
    */
   public sendCloseMessage(targetOrigin: string): void {
-    const message = createRequestMessage('CLOSE');
+    const message = createRequestMessage('CLOSE', undefined);
     this.sendMessageToParent(message, targetOrigin);
   }
 

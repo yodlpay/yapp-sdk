@@ -42,7 +42,7 @@ export type RequestMessage<T extends MessageRequestType = MessageRequestType> =
 
 export const createResponseMessage = <T extends MessageResponseType>(
   type: T,
-  payload?: (typeof MESSAGE_RESPONSE_PAYLOADS)[T],
+  payload: (typeof MESSAGE_RESPONSE_PAYLOADS)[T],
 ): ResponseMessage<T> =>
   ({
     type,
@@ -51,7 +51,7 @@ export const createResponseMessage = <T extends MessageResponseType>(
 
 export const createRequestMessage = <T extends MessageRequestType>(
   type: T,
-  payload?: (typeof MESSAGE_REQUEST_PAYLOADS)[T],
+  payload: (typeof MESSAGE_REQUEST_PAYLOADS)[T],
 ): RequestMessage<T> =>
   ({
     type,
