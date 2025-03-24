@@ -1,9 +1,28 @@
 {
   "name": "@yodlpay/yapp-sdk",
-  "version": "1.3.4",
+  "version": "1.4.0",
   "description": "SDK for building Yodl Yapps",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js",
+      "default": "./dist/types/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "types": [
+        "dist/types/index.d.ts"
+      ]
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/yodlpay/yapp-sdk.git"
