@@ -32,7 +32,7 @@ export interface Community {
  * UserContext response payload
  */
 export interface UserContext {
-  address: string; // User's blockchain address
+  address: Hex; // User's blockchain address
   primaryEnsName?: string; // Primary ENS name of user
   community?: Community | null; // Community information (null if not in a community)
 }
