@@ -432,10 +432,14 @@ export class PaymentManager extends CommunicationManager {
     );
     const payment = (await response.json()) as PaymentStatus;
 
-    if ('error' in payment) {
-      throw new Error(payment.error);
+    if ('error' in payment && payment.error === 'NotFound') {
+      return undefined;
     }
 
-    return payment.payment;
+    if ('payment' in payment) {
+      return payment.payment;
+    }
+
+    throw new Error('Invalid payment status');
   }
 }
