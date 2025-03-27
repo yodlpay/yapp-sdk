@@ -15,6 +15,12 @@ module.exports = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
+    alias: {
+      '@utils': path.resolve(__dirname, 'src/utils'),
+      '@managers': path.resolve(__dirname, 'src/managers'),
+      '@constants': path.resolve(__dirname, 'src/constants'),
+      '@types': path.resolve(__dirname, 'src/types'),
+    },
   },
   output: {
     filename: 'yapp-sdk.js',

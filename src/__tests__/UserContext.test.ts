@@ -1,5 +1,5 @@
-import * as safeWindowModule from '../utils/safeWindow';
 import { MessageManager } from './utils/TestMessageManagerAdapter';
+import * as safeWindowModule from '../utils/safeWindow';
 
 // Mock modules
 jest.mock('../utils/safeWindow');

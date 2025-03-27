@@ -1,10 +1,12 @@
-import { CommunicationManager } from './managers/CommunicationManager';
-import { PaymentManager } from './managers/PaymentManager';
-import { PaymentConfig, YappSDKConfig } from './types/config';
-import { FiatCurrency } from './types/currency';
-import { Payment, UserContext } from './types/messagePayload';
-import { Hex } from './types/utils';
-import { isInIframe } from './utils/isInIframe';
+import { CommunicationManager, PaymentManager } from '@managers';
+import {
+  Hex,
+  Payment,
+  PaymentConfig,
+  UserContext,
+  YappSDKConfig,
+} from '@types';
+
 /**
  * YappSDK - Main SDK class for handling payments and authentication.
  *
@@ -205,6 +207,6 @@ class YappSDK {
 
 // Export FiatCurrency for convenience
 export * from './types';
-export { FiatCurrency, isInIframe };
+export * from './utils';
 
 export default YappSDK;

@@ -16,4 +16,10 @@ module.exports = {
     '!src/**/*.d.ts',
     '!src/constants/keys.ts',
   ],
+  moduleNameMapper: {
+    '^@utils(.*)$': '<rootDir>/src/utils$1',
+    '^@managers(.*)$': '<rootDir>/src/managers$1',
+    '^@constants(.*)$': '<rootDir>/src/constants$1',
+    '^@types(.*)$': '<rootDir>/src/types$1',
+  },
 };

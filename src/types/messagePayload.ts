@@ -1,4 +1,3 @@
-import { FiatCurrency } from './currency';
 import { Hex } from './utils';
 
 /**

@@ -1,26 +1,7 @@
-import {
-  PAYMENT_TIMEOUT_MS,
-  STORAGE_KEY,
-  TEST_TIMEOUT_MS,
-  URL_PARAMS,
-  URL_PARAMS_REQUEST,
-} from '../constants/payment';
-import { PaymentConfig } from '../types/config';
-import { FiatCurrency } from '../types/currency';
-import { Payment } from '../types/messagePayload';
-import {
-  createRequestMessage,
-  MESSAGE_RESPONSE_TYPE,
-  RequestMessage,
-} from '../types/messages';
-import { Hex } from '../types/utils';
-import { isValidFiatCurrency } from '../utils/currencyValidation';
-import { isInIframe } from '../utils/isInIframe';
-import {
-  createValidMemoFromUUID,
-  isValidMemoSize,
-} from '../utils/memoValidation';
-import { CommunicationManager } from './CommunicationManager';
+import { createRequestMessage, FiatCurrency, Hex, MESSAGE_RESPONSE_TYPE, Payment, PaymentConfig, RequestMessage } from "@types";
+import { CommunicationManager } from "./CommunicationManager";
+import { createValidMemoFromUUID, isInIframe, isValidFiatCurrency, isValidMemoSize } from "@utils";
+import { PAYMENT_TIMEOUT_MS, STORAGE_KEY, TEST_TIMEOUT_MS, URL_PARAMS, URL_PARAMS_REQUEST } from "@constants";
 
 /**
  * Manages payment-related communication and processes.
