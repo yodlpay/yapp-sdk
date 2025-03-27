@@ -4,7 +4,7 @@ import {
   ResponseMessage,
   RequestMessage,
   MESSAGE_RESPONSE_PAYLOADS,
-  MESSAGE_REQUEST_PAYLOADS
+  MESSAGE_REQUEST_PAYLOADS,
 } from '../types/messages';
 
 export const createResponseMessage = <T extends MessageResponseType>(
