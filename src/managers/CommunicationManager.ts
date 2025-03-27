@@ -1,11 +1,10 @@
 import {
-  createRequestMessage,
   MESSAGE_RESPONSE_TYPE,
   RequestMessage,
   ResponseMessage,
   UserContext,
 } from '@types';
-import { getSafeWindow, isBrowser } from '@utils';
+import { createRequestMessage, getSafeWindow, isBrowser } from '@utils';
 
 /**
  * Manages secure communication between the Yapp and its parent window.
