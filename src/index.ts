@@ -1,8 +1,4 @@
-import {
-  PaymentConfig,
-  YappSDKConfig,
-  YappSDKConfigPublic,
-} from './types/config';
+import { PaymentConfig, YappSDKConfig } from './types/config';
 import { FiatCurrency } from './types/currency';
 import { MessageManager } from './utils/MessageManager';
 import { isInIframe } from './utils/isInIframe';
@@ -73,7 +69,7 @@ class YappSDK {
    * @param config - Configuration options for the SDK
    * @param config.origin - The allowed origin domain (defaults to 'https://yodl.me')
    */
-  constructor(config: YappSDKConfigPublic = {}) {
+  constructor(config: Partial<YappSDKConfig> = {}) {
     this.config = {
       origin: config.origin || 'https://yodl.me',
     } as YappSDKConfig;
