@@ -3,10 +3,10 @@ import {
   Hex,
   Payment,
   PaymentConfig,
-  PaymentStatus,
   UserContext,
   YappSDKConfig,
 } from '@types';
+import { getSafeWindow } from '@utils/safeWindow';
 
 /**
  * YappSDK - Main SDK class for handling payments and authentication.
@@ -194,21 +194,17 @@ class YappSDK {
    * }
    * ```
    */
-  public parsePaymentFromUrl(): Payment | null {
-    // Extract URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
+  public parsePaymentFromUrl(): Partial<Payment> {
+    const win = getSafeWindow();
+
+    const urlParams = new URLSearchParams(win?.location.search);
     const txHash = urlParams.get('txHash') as Hex;
     const chainId = urlParams.get('chainId');
 
-    // If we have transaction data in the URL, return it
-    if (txHash && chainId) {
-      return {
-        txHash,
-        chainId: parseInt(chainId, 10),
-      };
-    }
-
-    return null;
+    return {
+      txHash,
+      chainId: chainId ? parseInt(chainId, 10) : undefined,
+    };
   }
 
   /**
