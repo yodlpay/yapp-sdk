@@ -426,11 +426,16 @@ export class PaymentManager extends CommunicationManager {
    * @returns Promise that resolves with payment status
    * @throws {Error} If the SDK is not initialized or request times out
    */
-  public async getPayment(txHash: Hex): Promise<PaymentStatus> {
+  public async getPayment(txHash: Hex) {
     const response = await fetch(
       `${this.getApiUrl()}/api/v1/payments/${txHash}`,
     );
-    const payment = await response.json();
-    return payment as PaymentStatus;
+    const payment = (await response.json()) as PaymentStatus;
+
+    if ('error' in payment) {
+      throw new Error(payment.error);
+    }
+
+    return payment.payment;
   }
 }

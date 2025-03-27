@@ -218,7 +218,7 @@ class YappSDK {
    * @returns Promise that resolves with payment status
    * @throws {Error} If the SDK is not initialized or request times out
    */
-  public async getPayment(txHash: Hex): Promise<PaymentStatus> {
+  public async getPayment(txHash: Hex) {
     return await this.paymentManager.getPayment(txHash);
   }
 

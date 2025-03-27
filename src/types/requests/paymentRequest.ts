@@ -1,8 +1,6 @@
 import { Hex } from 'src';
 
-export interface PaymentStatus {
-  payment: PaymentStatusBody;
-}
+export type PaymentStatus = { payment: PaymentStatusBody } | { error: string };
 
 export interface PaymentStatusBody {
   chainId: number;
