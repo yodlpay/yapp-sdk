@@ -1,10 +1,10 @@
+import { CommunicationManager } from './managers/CommunicationManager';
+import { PaymentManager } from './managers/PaymentManager';
 import { PaymentConfig, YappSDKConfig } from './types/config';
 import { FiatCurrency } from './types/currency';
-import { MessageManager } from './utils/MessageManager';
-import { isInIframe } from './utils/isInIframe';
 import { Payment, UserContext } from './types/messagePayload';
 import { Hex } from './types/utils';
-
+import { isInIframe } from './utils/isInIframe';
 /**
  * YappSDK - Main SDK class for handling payments and authentication.
  *
@@ -59,8 +59,13 @@ import { Hex } from './types/utils';
  * ```
  */
 class YappSDK {
-  /** Instance of MessageManager handling messaging and origin validation */
-  private messaging!: MessageManager;
+  /** Instance of CommunicationManager handling messaging and basic communication */
+  private communicationManager!: CommunicationManager;
+
+  /** Instance of PaymentManager handling payment operations */
+  private paymentManager!: PaymentManager;
+
+  /** @internal */
   private config!: YappSDKConfig;
 
   /**
@@ -78,13 +83,14 @@ class YappSDK {
   }
 
   /**
-   * Initializes the SecurityManager with the provided credentials.
+   * Initializes the managers with the provided config.
    *
    * @param config - Configuration options
    * @private
    */
   private async initialize(config: YappSDKConfig) {
-    this.messaging = new MessageManager(config.origin);
+    this.communicationManager = new CommunicationManager(config.origin);
+    this.paymentManager = new PaymentManager(config.origin);
   }
 
   /**
@@ -93,7 +99,7 @@ class YappSDK {
    * @throws {Error} If the SDK is not initialized
    */
   private ensureInitialized(): void {
-    if (!this.messaging) {
+    if (!this.communicationManager || !this.paymentManager) {
       throw new Error(
         'SDK not initialized. Please wait for initialization to complete.',
       );
@@ -136,7 +142,7 @@ class YappSDK {
     config: PaymentConfig,
   ): Promise<Payment> {
     this.ensureInitialized();
-    return await this.messaging.sendPaymentRequest(address, config);
+    return await this.paymentManager.sendPaymentRequest(address, config);
   }
 
   /**
@@ -147,7 +153,7 @@ class YappSDK {
    */
   public async getUserContext(): Promise<UserContext> {
     this.ensureInitialized();
-    return await this.messaging.getUserContext();
+    return await this.communicationManager.getUserContext();
   }
 
   /**
@@ -193,13 +199,12 @@ class YappSDK {
    */
   public close(targetOrigin: string): void {
     this.ensureInitialized();
-    this.messaging.sendCloseMessage(targetOrigin);
+    this.communicationManager.sendCloseMessage(targetOrigin);
   }
 }
 
 // Export FiatCurrency for convenience
-export { FiatCurrency };
-export { isInIframe };
 export * from './types';
+export { FiatCurrency, isInIframe };
 
 export default YappSDK;
