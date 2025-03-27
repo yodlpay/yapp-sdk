@@ -1,13 +1,4 @@
-import { FiatCurrency } from './currency';
-
-export interface YappSDKConfigPublic {
-  /** URL of super app */
-  origin?: string;
-  /** The ENS name of the yapp */
-  ensName: string;
-  /** The public key in PEM format used for encryption */
-  publicKey?: string;
-}
+import { FiatCurrency, FiatCurrencyString } from './currency';
 
 /**
  * Configuration options for the YappSDK
@@ -15,17 +6,13 @@ export interface YappSDKConfigPublic {
  * @example
  * ```typescript
  * const config: YappSDKConfig = {
- *   publicKey: '-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----'
+ *   origin: 'https://yodl.me'
  * };
  * ```
  */
 export interface YappSDKConfig {
   /** URL of super app */
   origin: string;
-  /** The ENS name of the yapp */
-  ensName: string;
-  /** The public key in PEM format used for encryption */
-  publicKey: string;
 }
 
 /**
@@ -44,7 +31,7 @@ export interface PaymentConfig {
   /** The payment amount */
   amount: number;
   /** The currency code */
-  currency: FiatCurrency;
+  currency: FiatCurrency | FiatCurrencyString;
   /** Optional payment memo/description */
   memo?: string;
   /** Payment redirect URL - Required when application runs outside of an iframe */
