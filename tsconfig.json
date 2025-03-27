@@ -7,7 +7,18 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@utils/*": ["src/utils/*"],
+      "@managers/*": ["src/managers/*"],
+      "@constants/*": ["src/constants/*"],
+      "@types/*": ["src/types/*"],
+      "@utils": ["src/utils"],
+      "@managers": ["src/managers"],
+      "@constants": ["src/constants"],
+      "@types": ["src/types"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

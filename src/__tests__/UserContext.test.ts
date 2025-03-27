@@ -1,4 +1,4 @@
-import { MessageManager } from '../utils/MessageManager';
+import { MessageManager } from './utils/TestMessageManagerAdapter';
 import * as safeWindowModule from '../utils/safeWindow';
 
 // Mock modules

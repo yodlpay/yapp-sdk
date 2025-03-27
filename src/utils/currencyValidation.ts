@@ -1,4 +1,4 @@
-import { FiatCurrency } from '../types/currency';
+import { FiatCurrency } from '@types';
 
 /**
  * Checks if the provided currency string is a valid supported fiat currency
