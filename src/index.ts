@@ -76,9 +76,9 @@ class YappSDK {
    * @param config - Configuration options for the SDK
    * @param config.origin - The allowed origin domain (defaults to 'https://yodl.me')
    */
-  constructor(config: Partial<YappSDKConfig> = {}) {
+  constructor(config?: Partial<YappSDKConfig>) {
     this.config = {
-      origin: config.origin || 'https://yodl.me',
+      origin: config?.origin || 'https://yodl.me',
     } as YappSDKConfig;
 
     this.initialize(this.config);
