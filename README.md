@@ -186,6 +186,52 @@ The payment flow handles both iframe and redirect modes automatically based on t
 - `memo`: Optional identifier/description (max 32 bytes)
 - `redirectUrl`: Required when not in iframe mode
 
+#### Payment Modes
+
+The SDK operates in two different modes depending on the environment:
+
+1. **Iframe Mode**
+
+   - Used automatically when your Yapp is running inside an iframe
+   - Communicates using the postMessage API
+   - Doesn't require a redirectUrl
+   - Provides a seamless in-app experience
+
+2. **Redirect Mode**
+   - Used when your Yapp is running standalone (not in an iframe)
+   - Requires a `redirectUrl` parameter to return after payment
+   - Uses URL parameters and session storage to track payment state
+   - Handles browser tab visibility changes to detect returns from payment flow
+
+#### Error Handling
+
+The payment request might throw errors in several scenarios:
+
+```typescript
+try {
+  const response = await sdk.requestPayment('0x123...', config);
+  // Handle successful payment
+} catch (error) {
+  if (error.message === 'Payment was cancelled') {
+    // User cancelled the payment
+  } else if (error.message === 'Payment request timed out') {
+    // Payment took too long (default timeout: 5 minutes)
+  } else if (error.message.includes('ENS name not found')) {
+    // ENS name resolution failed
+  } else if (error.message.includes('Invalid currency')) {
+    // Unsupported currency was specified
+  } else if (error.message.includes('Memo exceeds maximum size')) {
+    // Memo was too large (max 32 bytes)
+  } else if (error.message.includes('Amount must be a positive number')) {
+    // Amount was invalid
+  } else if (error.message.includes('Redirect URL is required')) {
+    // Running outside iframe without redirectUrl
+  } else {
+    // Other errors
+  }
+}
+```
+
 #### Memo Field Usage
 
 The `memo` field serves two purposes:
@@ -247,6 +293,115 @@ The API response includes comprehensive payment information:
 }
 ```
 
+#### Payment Response Structure
+
+The `requestPayment` method returns a Promise that resolves to a `Payment` object with the following structure:
+
+```typescript
+interface Payment {
+  txHash: string; // Transaction hash (Hex string)
+  chainId: number; // Chain ID where transaction was executed
+}
+```
+
+This basic response provides essential information to track the payment on-chain. To get more detailed information, you'll need to use the Yodl API as shown above.
+
+#### ENS Name Resolution
+
+The SDK supports both standard Ethereum addresses and ENS (Ethereum Name Service) names as payment recipients:
+
+```typescript
+// Using a standard Ethereum address
+await sdk.requestPayment('0x742d35Cc6634C0532925a3b844Bc454e4438f44e', config);
+
+// Using an ENS name
+await sdk.requestPayment('vitalik.eth', config);
+```
+
+When using ENS names, there are some important considerations:
+
+1. **Resolution Handling**
+
+   - ENS resolution happens on the Yodl side
+   - If the ENS name cannot be resolved, the error `ENS name not found: [name]` will be thrown
+   - Always handle this error appropriately in your application
+
+2. **Performance Implications**
+
+   - ENS resolution adds a small delay to the payment process
+   - For performance-sensitive applications, consider resolving ENS names in advance and using the resulting address
+
+3. **Testing**
+
+   ```typescript
+   try {
+     await sdk.requestPayment('nonexistent-name.eth', config);
+   } catch (error) {
+     if (error.message.includes('ENS name not found')) {
+       // Handle ENS resolution failure
+       console.error('The ENS name could not be resolved');
+     }
+   }
+   ```
+
+#### Advanced Payment Tracking
+
+For applications requiring robust payment tracking:
+
+1. **Generate Unique Memos**
+
+   ```typescript
+   // Generate a unique memo combining order ID and timestamp
+   const uniqueMemo = `order_${orderId}_${Date.now()}`;
+   ```
+
+2. **Store Payment State**
+
+   ```typescript
+   // Store pending payment state in your database
+   await storePaymentIntent({
+     orderId,
+     memo: uniqueMemo,
+     amount: 50,
+     currency: FiatCurrency.USD,
+     status: 'pending',
+     timestamp: new Date(),
+   });
+   ```
+
+3. **Update After Completion**
+
+   ```typescript
+   // After payment completes
+   await updatePaymentStatus({
+     memo: uniqueMemo,
+     status: 'completed',
+     txHash: payment.txHash,
+     chainId: payment.chainId,
+   });
+   ```
+
+4. **Handle Timeouts**
+
+   The SDK automatically handles payment timeouts (default: 5 minutes), but your application should implement additional timeout handling for robustness.
+
+   ```typescript
+   // Set up payment timeout in your application
+   setTimeout(
+     async () => {
+       const payment = await getPaymentByMemo(uniqueMemo);
+       if (payment.status === 'pending') {
+         await updatePaymentStatus({
+           memo: uniqueMemo,
+           status: 'timeout',
+         });
+         // Notify user or trigger recovery flow
+       }
+     },
+     5 * 60 * 1000 + 30000,
+   ); // 5 minutes + 30 seconds buffer
+   ```
+
 This detailed information can be used for:
 
 - Verifying payment amounts and currencies
@@ -293,8 +448,16 @@ try {
    - Store `memo` values securely
    - Implement proper error handling
    - Use timeouts appropriately (default: 5 minutes)
+   - Validate the returned payment parameters to prevent spoofing
 
-3. **Cross-Origin Communication**
+3. **Session Storage Considerations**
+
+   - The SDK uses session storage to maintain payment state during redirects
+   - This data is automatically cleared after payment completion or timeout
+   - Consider implementing additional cleanup mechanisms for abandoned flows
+   - Sensitive payment data (like customer information) should not be stored in the memo field
+
+4. **Cross-Origin Communication**
    - Only accept messages from configured origins
    - Validate all incoming messages
    - Use secure postMessage communication

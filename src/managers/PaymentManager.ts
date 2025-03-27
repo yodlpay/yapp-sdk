@@ -47,7 +47,7 @@ export class PaymentManager extends CommunicationManager {
    * - Iframe mode: Uses postMessage API for communication
    * - Redirect mode: Uses URL parameters and page redirects
    *
-   * @param address - The recipient's blockchain address
+   * @param addressOrEns - The recipient's blockchain address or ENS name
    * @param config - Payment configuration options including amount, currency, memo, and redirectUrl
    * @returns Promise that resolves with payment response containing txHash and chainId
    * @throws {Error} If:
@@ -58,9 +58,10 @@ export class PaymentManager extends CommunicationManager {
    *   - Amount is not a positive number
    *   - Running outside iframe without redirectUrl
    *   - Message is sent to an invalid origin
+   *   - ENS name is not found ("ENS name not found: [name]")
    */
   public sendPaymentRequest(
-    address: Hex,
+    addressOrEns: string,
     config: PaymentConfig,
   ): Promise<Payment> {
     return new Promise((resolve, reject) => {
@@ -87,7 +88,7 @@ export class PaymentManager extends CommunicationManager {
       }
 
       const message = createRequestMessage('PAYMENT_REQUEST', {
-        address,
+        addressOrEns,
         amount: config.amount,
         currency: config.currency,
         memo: config.memo,
@@ -112,12 +113,21 @@ export class PaymentManager extends CommunicationManager {
     });
   }
 
+  /**
+   * Handles payment requests in iframe mode using postMessage API.
+   * Sets up event listeners for payment success, cancellation, and ENS resolution errors.
+   *
+   * @param message - The payment request message to send to the parent window
+   * @param resolve - The promise resolve function
+   * @param reject - The promise reject function
+   * @private
+   */
   private handleIframePayment(
     message: RequestMessage<'PAYMENT_REQUEST'>,
     resolve: (value: Payment) => void,
     reject: (reason: Error) => void,
   ): void {
-    console.info(`Handling iframe payment for ${message.payload.address}`);
+    console.info(`Handling iframe payment for ${message.payload.addressOrEns}`);
 
     // Add listener for payment success
     const successListener = (response: any) => {
@@ -125,6 +135,10 @@ export class PaymentManager extends CommunicationManager {
       this.removeMessageListener(
         MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED,
         cancelListener,
+      );
+      this.removeMessageListener(
+        MESSAGE_RESPONSE_TYPE.ENS_NOT_FOUND,
+        ensNotFoundListener,
       );
       resolve(response.payload);
     };
@@ -136,7 +150,26 @@ export class PaymentManager extends CommunicationManager {
         MESSAGE_RESPONSE_TYPE.PAYMENT_SUCCESS,
         successListener,
       );
+      this.removeMessageListener(
+        MESSAGE_RESPONSE_TYPE.ENS_NOT_FOUND,
+        ensNotFoundListener,
+      );
       reject(new Error('Payment was cancelled'));
+    };
+
+    // Add listener for ENS not found
+    const ensNotFoundListener = (response: any) => {
+      clearTimeout(timeout);
+      this.removeMessageListener(
+        MESSAGE_RESPONSE_TYPE.PAYMENT_SUCCESS,
+        successListener,
+      );
+      this.removeMessageListener(
+        MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED,
+        cancelListener,
+      );
+      const ensName = response.payload?.ensName || message.payload.addressOrEns;
+      reject(new Error(`ENS name not found: ${ensName}`));
     };
 
     const timeout = this.setupPaymentTimeout(reject, [
@@ -148,6 +181,10 @@ export class PaymentManager extends CommunicationManager {
         type: MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED,
         listener: cancelListener,
       },
+      {
+        type: MESSAGE_RESPONSE_TYPE.ENS_NOT_FOUND,
+        listener: ensNotFoundListener,
+      },
     ]);
 
     this.addMessageListener(
@@ -158,6 +195,11 @@ export class PaymentManager extends CommunicationManager {
     this.addMessageListener(
       MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED,
       cancelListener,
+    );
+
+    this.addMessageListener(
+      MESSAGE_RESPONSE_TYPE.ENS_NOT_FOUND,
+      ensNotFoundListener,
     );
 
     try {
@@ -172,6 +214,10 @@ export class PaymentManager extends CommunicationManager {
         MESSAGE_RESPONSE_TYPE.PAYMENT_CANCELLED,
         cancelListener,
       );
+      this.removeMessageListener(
+        MESSAGE_RESPONSE_TYPE.ENS_NOT_FOUND,
+        ensNotFoundListener,
+      );
 
       if (error instanceof Error) {
         reject(error);
@@ -181,17 +227,30 @@ export class PaymentManager extends CommunicationManager {
     }
   }
 
+  /**
+   * Handles payment requests in redirect mode.
+   * Stores payment info in session storage, sets up return handler, and redirects to payment page.
+   *
+   * @param message - The payment request message
+   * @param redirectUrl - URL to redirect back to after payment
+   * @param resolve - The promise resolve function
+   * @param reject - The promise reject function
+   * @private
+   */
   private handleRedirectPayment(
     message: RequestMessage<'PAYMENT_REQUEST'>,
     redirectUrl: string,
     resolve: (value: Payment) => void,
     reject: (reason: Error) => void,
   ): void {
-    console.info(`Handling redirect payment for ${message.payload.address}`);
+    console.info(
+      `Handling redirect payment for ${message.payload.addressOrEns}`,
+    );
 
     // Generate or use existing memo
     const memo =
-      message.payload.memo || createValidMemoFromUUID(message.payload.address);
+      message.payload.memo ||
+      createValidMemoFromUUID(message.payload.addressOrEns);
 
     // Check if we have a pending payment with the same memo
     const existingPayment = sessionStorage.getItem(STORAGE_KEY);
@@ -223,7 +282,7 @@ export class PaymentManager extends CommunicationManager {
 
     // Open payment page in current window
     const paymentUrl = new URL(super.getAllowedOrigin());
-    paymentUrl.pathname = `/${message.payload.address}`;
+    paymentUrl.pathname = `/${message.payload.addressOrEns}`;
 
     // Encode all parameters properly
     paymentUrl.searchParams.set(
@@ -244,6 +303,16 @@ export class PaymentManager extends CommunicationManager {
     window.location.href = paymentUrl.toString();
   }
 
+  /**
+   * Sets up a handler for processing URL parameters when redirected back from the payment page.
+   * Uses the memo to match the returning payment with the original request.
+   * Handles success, cancellation, and timeout scenarios.
+   *
+   * @param memo - The payment memo used to match returning payments
+   * @param resolve - The promise resolve function
+   * @param reject - The promise reject function
+   * @private
+   */
   private setupReturnUrlHandler(
     memo: string,
     resolve: (value: Payment) => void,
@@ -319,6 +388,15 @@ export class PaymentManager extends CommunicationManager {
     }
   }
 
+  /**
+   * Sets up a timeout for payment requests.
+   * If the timeout is reached, cleans up all listeners and rejects the promise with a timeout error.
+   *
+   * @param reject - The promise reject function
+   * @param listenersToCleanup - Array of message listeners to clean up on timeout
+   * @returns A timeout ID that can be used to clear the timeout
+   * @private
+   */
   private setupPaymentTimeout(
     reject: (reason: Error) => void,
     listenersToCleanup: Array<{

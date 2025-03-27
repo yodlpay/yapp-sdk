@@ -6,11 +6,16 @@ const MESSAGE_RESPONSE_PAYLOADS = {
   PAYMENT_SUCCESS: {} as Payment,
   PAYMENT_CANCELLED: undefined,
   USER_CONTEXT_RESPONSE: {} as UserContext,
+  ENS_NOT_FOUND: undefined, // When user request payment for an ENS name that is not found
 } as const;
 
 const MESSAGE_REQUEST_PAYLOADS = {
   PAYMENT_REQUEST: {} as PaymentConfig & {
-    address: Hex;
+    addressOrEns: string;
+    /**
+     * @deprecated Use addressOrEns instead
+     */
+    address?: Hex;
   },
   USER_CONTEXT_REQUEST: undefined,
   CLOSE: undefined,

@@ -111,13 +111,14 @@ class YappSDK {
   /**
    * Sends a payment request to the parent window and waits for confirmation.
    *
-   * @param address - The address to send the payment to
+   * @param addressOrEns - The recipient's Ethereum address (0x...) or ENS name (e.g., 'name.eth')
    * @param config - Payment configuration options
    * @returns Promise that resolves with payment response when successful
    * @throws {Error} If the SDK is not initialized, payment is cancelled, or times out
    *
    * @example
    * ```typescript
+   * // Using Ethereum address
    * try {
    *   const response = await sdk.requestPayment('0x742d35Cc6634C0532925a3b844Bc454e4438f44e', {
    *     amount: 50,
@@ -137,14 +138,26 @@ class YappSDK {
    *     console.error('Payment failed:', error.message);
    *   }
    * }
+   *
+   * // Using ENS name
+   * try {
+   *   const response = await sdk.requestPayment('vitalik.eth', {
+   *     amount: 100,
+   *     currency: FiatCurrency.USD,
+   *     memo: 'Donation'
+   *   });
+   *   // Handle successful payment
+   * } catch (error) {
+   *   // Handle errors
+   * }
    * ```
    */
   public async requestPayment(
-    address: Hex,
+    addressOrEns: string,
     config: PaymentConfig,
   ): Promise<Payment> {
     this.ensureInitialized();
-    return await this.paymentManager.sendPaymentRequest(address, config);
+    return await this.paymentManager.sendPaymentRequest(addressOrEns, config);
   }
 
   /**

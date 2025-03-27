@@ -58,7 +58,9 @@ export class MessageManager {
     reject: (reason: Error) => void,
   ): void {
     // Implementation just for test mocking - actual implementation in PaymentManager
-    console.info(`[TEST] Mock iframe payment for ${message.payload.address}`);
+    console.info(
+      `[TEST] Mock iframe payment for ${message.payload.addressOrEns}`,
+    );
   }
 
   /**
@@ -71,7 +73,9 @@ export class MessageManager {
     reject: (reason: Error) => void,
   ): void {
     // Implementation just for test mocking - actual implementation in PaymentManager
-    console.info(`[TEST] Mock redirect payment for ${message.payload.address}`);
+    console.info(
+      `[TEST] Mock redirect payment for ${message.payload.addressOrEns}`,
+    );
   }
 
   /**
