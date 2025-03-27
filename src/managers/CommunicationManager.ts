@@ -16,11 +16,14 @@ import { createRequestMessage, getSafeWindow, isBrowser } from '@utils';
  */
 export class CommunicationManager {
   private readonly allowedOrigin: string;
+  private readonly apiUrl: string;
+
   private messageListeners: Map<string, ((response: any) => void)[]> =
     new Map();
 
-  constructor(allowedOrigin: string) {
+  constructor(allowedOrigin: string, apiUrl: string) {
     this.allowedOrigin = allowedOrigin;
+    this.apiUrl = apiUrl;
     if (isBrowser()) {
       this.setupMessageListener();
     }
@@ -34,6 +37,10 @@ export class CommunicationManager {
    */
   protected getAllowedOrigin(): string {
     return this.allowedOrigin;
+  }
+
+  protected getApiUrl(): string {
+    return this.apiUrl;
   }
 
   private setupMessageListener(): void {

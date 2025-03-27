@@ -11,6 +11,7 @@ import {
   MESSAGE_RESPONSE_TYPE,
   Payment,
   PaymentConfig,
+  PaymentStatus,
   RequestMessage,
 } from '@types';
 import {
@@ -36,9 +37,10 @@ export class PaymentManager extends CommunicationManager {
    * Creates a new PaymentManager instance.
    *
    * @param allowedOrigin - The allowed origin for communication
+   * @param apiUrl - The API URL
    */
-  constructor(allowedOrigin: string) {
-    super(allowedOrigin);
+  constructor(allowedOrigin: string, apiUrl: string) {
+    super(allowedOrigin, apiUrl);
   }
 
   /**
@@ -415,5 +417,20 @@ export class PaymentManager extends CommunicationManager {
       },
       process.env.NODE_ENV === 'test' ? TEST_TIMEOUT_MS : PAYMENT_TIMEOUT_MS,
     );
+  }
+
+  /**
+   * Get the status of a payment.
+   *
+   * @param txHash - The transaction hash of the payment
+   * @returns Promise that resolves with payment status
+   * @throws {Error} If the SDK is not initialized or request times out
+   */
+  public async getPayment(txHash: Hex): Promise<PaymentStatus> {
+    const response = await fetch(
+      `${this.getApiUrl()}/api/v1/payments/${txHash}`,
+    );
+    const payment = await response.json();
+    return payment as PaymentStatus;
   }
 }

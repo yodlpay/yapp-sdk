@@ -3,6 +3,7 @@ import {
   Hex,
   Payment,
   PaymentConfig,
+  PaymentStatus,
   UserContext,
   YappSDKConfig,
 } from '@types';
@@ -79,6 +80,7 @@ class YappSDK {
   constructor(config?: Partial<YappSDKConfig>) {
     this.config = {
       origin: config?.origin || 'https://yodl.me',
+      apiUrl: config?.apiUrl || 'https://tx.yodl.me',
     } as YappSDKConfig;
 
     this.initialize(this.config);
@@ -91,8 +93,11 @@ class YappSDK {
    * @private
    */
   private async initialize(config: YappSDKConfig) {
-    this.communicationManager = new CommunicationManager(config.origin);
-    this.paymentManager = new PaymentManager(config.origin);
+    this.communicationManager = new CommunicationManager(
+      config.origin,
+      config.apiUrl,
+    );
+    this.paymentManager = new PaymentManager(config.origin, config.apiUrl);
   }
 
   /**
@@ -204,6 +209,17 @@ class YappSDK {
     }
 
     return null;
+  }
+
+  /**
+   * Get the status of a payment.
+   *
+   * @param txHash - The transaction hash of the payment
+   * @returns Promise that resolves with payment status
+   * @throws {Error} If the SDK is not initialized or request times out
+   */
+  public async getPayment(txHash: Hex): Promise<PaymentStatus> {
+    return await this.paymentManager.getPayment(txHash);
   }
 
   /**

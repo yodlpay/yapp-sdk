@@ -20,10 +20,10 @@ export class MessageManager {
   /** @internal For testing purposes only */
   public readonly allowedOrigin: string;
 
-  constructor(allowedOrigin: string) {
+  constructor(allowedOrigin: string, apiUrl: string) {
     this.allowedOrigin = allowedOrigin;
-    this.communicationManager = new CommunicationManager(allowedOrigin);
-    this.paymentManager = new PaymentManager(allowedOrigin);
+    this.communicationManager = new CommunicationManager(allowedOrigin, apiUrl);
+    this.paymentManager = new PaymentManager(allowedOrigin, apiUrl);
   }
 
   public getUserContext(): Promise<UserContext> {

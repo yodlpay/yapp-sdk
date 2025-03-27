@@ -13,6 +13,8 @@ import { FiatCurrency, FiatCurrencyString } from './currency';
 export interface YappSDKConfig {
   /** URL of super app */
   origin: string;
+  /** URL of the API */
+  apiUrl: string;
 }
 
 /**
