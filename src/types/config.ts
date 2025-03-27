@@ -1,4 +1,4 @@
-import { FiatCurrency } from './currency';
+import { FiatCurrency, FiatCurrencyString } from './currency';
 
 /**
  * Configuration options for the YappSDK
@@ -31,7 +31,7 @@ export interface PaymentConfig {
   /** The payment amount */
   amount: number;
   /** The currency code */
-  currency: FiatCurrency;
+  currency: FiatCurrency | FiatCurrencyString;
   /** Optional payment memo/description */
   memo?: string;
   /** Payment redirect URL - Required when application runs outside of an iframe */

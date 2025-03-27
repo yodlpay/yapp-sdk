@@ -26,3 +26,9 @@ export enum FiatCurrency {
   PLN = 'PLN',
   SEK = 'SEK',
 }
+
+/**
+ * String literal type for fiat currency codes
+ * Allows using string literals like 'USD' instead of FiatCurrency.USD
+ */
+export type FiatCurrencyString = keyof typeof FiatCurrency;
