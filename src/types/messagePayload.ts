@@ -2,16 +2,6 @@ import { FiatCurrency } from './currency';
 import { Hex } from './utils';
 
 /**
- * Payment request payload
- */
-export interface PaymentRequest {
-  address: Hex; // Recipient's blockchain address
-  amount: number; // Payment amount
-  currency: FiatCurrency; // Payment currency
-  memo?: string; // Optional payment description
-}
-
-/**
  * Payment response payload
  */
 export interface Payment {

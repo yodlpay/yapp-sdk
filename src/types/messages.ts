@@ -1,4 +1,5 @@
-import { Payment, UserContext, PaymentRequest } from './messagePayload';
+import { Payment, UserContext } from './messagePayload';
+import { PaymentConfig } from './config';
 
 const MESSAGE_RESPONSE_PAYLOADS = {
   PAYMENT_SUCCESS: {} as Payment,
@@ -7,7 +8,7 @@ const MESSAGE_RESPONSE_PAYLOADS = {
 } as const;
 
 const MESSAGE_REQUEST_PAYLOADS = {
-  PAYMENT_REQUEST: {} as PaymentRequest,
+  PAYMENT_REQUEST: {} as PaymentConfig,
   USER_CONTEXT_REQUEST: undefined,
   CLOSE: undefined,
 } as const;
