@@ -18,7 +18,8 @@
       "@managers": ["src/managers"],
       "@constants": ["src/constants"],
       "@types": ["src/types"]
-    }
+    },
+    "rootDir": "src"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
