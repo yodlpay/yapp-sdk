@@ -1,5 +1,6 @@
 import { Payment, UserContext } from './messagePayload';
 import { PaymentConfig } from './config';
+import { Hex } from './utils';
 
 const MESSAGE_RESPONSE_PAYLOADS = {
   PAYMENT_SUCCESS: {} as Payment,
@@ -8,7 +9,9 @@ const MESSAGE_RESPONSE_PAYLOADS = {
 } as const;
 
 const MESSAGE_REQUEST_PAYLOADS = {
-  PAYMENT_REQUEST: {} as PaymentConfig,
+  PAYMENT_REQUEST: {} as PaymentConfig & {
+    address: Hex;
+  },
   USER_CONTEXT_REQUEST: undefined,
   CLOSE: undefined,
 } as const;
