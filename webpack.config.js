@@ -1,4 +1,5 @@
 const path = require('path');
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = {
   entry: './src/index.ts',
@@ -8,13 +9,20 @@ module.exports = {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        use: {
+          loader: 'ts-loader',
+          options: {
+            configFile: 'tsconfig.json',
+            transpileOnly: true,
+          },
+        },
         exclude: /node_modules/,
       },
     ],
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
+    plugins: [new TsconfigPathsPlugin({ configFile: './tsconfig.json' })],
     alias: {
       '@utils': path.resolve(__dirname, 'src/utils'),
       '@managers': path.resolve(__dirname, 'src/managers'),
@@ -29,5 +37,8 @@ module.exports = {
     libraryTarget: 'umd',
     libraryExport: 'default',
     globalObject: 'this',
+  },
+  externals: {
+    jose: 'jose',
   },
 };

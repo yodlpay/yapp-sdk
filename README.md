@@ -316,3 +316,16 @@ We welcome contributions! Please see our contributing guidelines for more detail
 ## 📄 License
 
 MIT License - see LICENSE file for details.
+
+## Development
+
+### Path Aliases
+
+This codebase uses TypeScript path aliases for cleaner imports:
+
+- `@utils` - Points to `src/utils`
+- `@managers` - Points to `src/managers`
+- `@constants` - Points to `src/constants`
+- `@types` - Points to `src/types`
+
+These aliases are properly resolved during build time using `tsc-alias` and `tsconfig-paths-webpack-plugin` for the CommonJS and UMD outputs, respectively.
