@@ -6,7 +6,7 @@ jest.mock('../utils/MessageManager');
 class MockYappSDK {
   private messaging: MessageManager;
 
-  constructor(config: { ensName: string; origin?: string }) {
+  constructor(config: { origin?: string } = {}) {
     this.messaging = new MessageManager(config.origin || 'https://yodl.me');
   }
 
@@ -68,7 +68,6 @@ describe('YappSDK.getUserContext', () => {
 
     // Create the SDK instance
     const sdk = new MockYappSDK({
-      ensName: TEST_CONSTANTS.ENS_NAME,
       origin: TEST_CONSTANTS.ORIGIN,
     });
 
@@ -90,7 +89,6 @@ describe('YappSDK.getUserContext', () => {
 
     // Create the SDK instance
     const sdk = new MockYappSDK({
-      ensName: TEST_CONSTANTS.ENS_NAME,
       origin: TEST_CONSTANTS.ORIGIN,
     });
 
@@ -112,7 +110,6 @@ describe('YappSDK.getUserContext', () => {
 
     // Create the SDK instance
     const sdk = new MockYappSDK({
-      ensName: TEST_CONSTANTS.ENS_NAME,
       origin: TEST_CONSTANTS.ORIGIN,
     });
 
@@ -139,7 +136,6 @@ describe('YappSDK.getUserContext', () => {
 
     // Create the SDK instance
     const sdk = new MockYappSDK({
-      ensName: TEST_CONSTANTS.ENS_NAME,
       origin: TEST_CONSTANTS.ORIGIN,
     });
 
@@ -152,5 +148,27 @@ describe('YappSDK.getUserContext', () => {
     // Verify the result
     expect(result).toEqual(mockUserContext);
     expect(result.community).toBeUndefined();
+  });
+
+  it('should work with minimal configuration', async () => {
+    // Setup mock response
+    const mockUserContext = {
+      address: TEST_CONSTANTS.USER_ADDRESS,
+      primaryEnsName: TEST_CONSTANTS.PRIMARY_ENS,
+    };
+
+    mockGetUserContext.mockResolvedValue(mockUserContext);
+
+    // Create the SDK instance with no parameters
+    const sdk = new MockYappSDK();
+
+    // Call getUserContext and get the result
+    const result = await sdk.getUserContext();
+
+    // Verify MessageManager.getUserContext was called
+    expect(mockGetUserContext).toHaveBeenCalled();
+
+    // Verify the result
+    expect(result).toEqual(mockUserContext);
   });
 });

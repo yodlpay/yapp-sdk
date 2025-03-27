@@ -13,12 +13,8 @@ npm install @yodlpay/yapp-sdk
 ```typescript
 import YappSDK from '@yodlpay/yapp-sdk';
 
-// Initialize the SDK with your domain and public key
-const sdk = new YappSDK({
-  ensName: 'my-yapp.eth',
-  // origin: "https://yodl.me", // Optional: defaults to https://yodl.me
-  // publicKey: "my-test-public-key" // Optional: ES256 PEM encoded public key
-});
+// Initialize the SDK with default configuration
+const sdk = new YappSDK();
 ```
 
 ## 💰 Payment Creation Example
@@ -29,9 +25,8 @@ Here's a focused example demonstrating how to create payments with the YappSDK:
 import React, { useState, useEffect } from 'react';
 import YappSDK, { FiatCurrency, Payment, isInIframe } from '@yodlpay/yapp-sdk';
 
-const sdk = new YappSDK({
-  ensName: 'my-yapp.eth',
-});
+// Initialize with minimal configuration
+const sdk = new YappSDK();
 
 function PaymentExample() {
   const [paymentResult, setPaymentResult] = useState<Payment | null>(null);
@@ -287,24 +282,19 @@ try {
 
 ## 🔒 Security Best Practices
 
-1. **Token Validation**
-
-   - Always validate JWT tokens using `sdk.verify()`
-   - Verify the `aud` claim matches your Yapp's ENS name
-
-2. **Origin Security**
+1. **Origin Security**
 
    - Use HTTPS in production
    - Validate message origins in iframe mode
    - Set appropriate Content Security Policy (CSP) headers
 
-3. **Payment Handling**
+2. **Payment Handling**
 
    - Store `memo` values securely
    - Implement proper error handling
    - Use timeouts appropriately (default: 5 minutes)
 
-4. **Cross-Origin Communication**
+3. **Cross-Origin Communication**
    - Only accept messages from configured origins
    - Validate all incoming messages
    - Use secure postMessage communication

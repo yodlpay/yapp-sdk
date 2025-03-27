@@ -1,28 +1,13 @@
-import * as jose from 'jose';
-import { YODL_PUBLIC_KEY } from './constants/keys';
 import {
   PaymentConfig,
   YappSDKConfig,
   YappSDKConfigPublic,
 } from './types/config';
 import { FiatCurrency } from './types/currency';
-import { JWTPayload } from './types/jwt';
 import { MessageManager } from './utils/MessageManager';
 import { isInIframe } from './utils/isInIframe';
 import { Payment, UserContext } from './types/messagePayload';
 import { Hex } from './types/utils';
-
-/**
- * Error thrown when JWT audience validation fails.
- * This typically occurs when the JWT's 'aud' claim doesn't match the expected value.
- *
- */
-export class JWTAudError extends Error {
-  constructor(message: string = 'JWT issued for a different yapp') {
-    super(message);
-    this.name = 'JWTAudError';
-  }
-}
 
 /**
  * YappSDK - Main SDK class for handling payments and authentication.
@@ -33,14 +18,11 @@ export class JWTAudError extends Error {
  * @example
  * Basic usage:
  * ```typescript
+ * const sdk = new YappSDK();
+ * // Or with custom origin
  * const sdk = new YappSDK({
- *   origin: 'https://allowed-domain.com',
- *   ensName: 'myapp.eth',
- *   publicKey: publicKeyPem // Optional, defaults to YODL_PUBLIC_KEY
+ *   origin: 'https://allowed-domain.com'
  * });
- *
- * // Validate a JWT token
- * const decodedData = await sdk.verify(jwtToken);
  * ```
  *
  * @example
@@ -62,9 +44,7 @@ export class JWTAudError extends Error {
  * Handling redirect payments:
  * ```typescript
  * // On your redirect page (e.g., /payment-callback):
- * const sdk = new YappSDK({
- *   ensName: 'myapp.eth'
- * });
+ * const sdk = new YappSDK();
  *
  * // Check if this page load is a payment return
  * const paymentResult = sdk.parsePaymentFromUrl();
@@ -92,20 +72,10 @@ class YappSDK {
    *
    * @param config - Configuration options for the SDK
    * @param config.origin - The allowed origin domain (defaults to 'https://yodl.me')
-   * @param config.ensName - The ENS name of your application
-   * @param config.publicKey - Optional public key for JWT verification (defaults to YODL_PUBLIC_KEY)
-   * @throws {Error} If ensName is missing or invalid
    */
-  constructor(config: YappSDKConfigPublic) {
-    if (!config.ensName || config.ensName == '') {
-      // add better checks for valid ENS names.
-      throw new Error('ensName is required');
-    }
-
+  constructor(config: YappSDKConfigPublic = {}) {
     this.config = {
       origin: config.origin || 'https://yodl.me',
-      ensName: config.ensName,
-      publicKey: config.publicKey || YODL_PUBLIC_KEY,
     } as YappSDKConfig;
 
     this.initialize(this.config);
@@ -132,28 +102,6 @@ class YappSDK {
         'SDK not initialized. Please wait for initialization to complete.',
       );
     }
-  }
-
-  /**
-   * Validates and decodes a JWT token.
-   *
-   * @param jwt - The JWT token to validate and decode
-   * @returns The decoded payload data if the token is valid
-   * @throws {JWTAudError} If the token's audience doesn't match the configured ensName
-   * @throws {Error} If the token is invalid or verification fails
-   */
-  public async verify(jwt: string): Promise<JWTPayload | undefined> {
-    const publicKey = await jose.importSPKI(this.config.publicKey, 'ES256');
-
-    const { payload } = await jose.jwtVerify<JWTPayload>(jwt, publicKey, {
-      algorithms: ['ES256'],
-    });
-
-    if (payload.aud !== this.config.ensName) {
-      throw new JWTAudError(`JWT issued for different yapp (${payload.aud})`);
-    }
-
-    return payload;
   }
 
   /**
@@ -215,9 +163,7 @@ class YappSDK {
    * @example
    * ```typescript
    * // On your redirect page:
-   * const sdk = new YappSDK({
-   *   ensName: 'myapp.eth'
-   * });
+   * const sdk = new YappSDK();
    *
    * const paymentResult = sdk.parsePaymentFromUrl();
    * if (paymentResult) {
