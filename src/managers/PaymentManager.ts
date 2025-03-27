@@ -161,7 +161,7 @@ export class PaymentManager extends CommunicationManager {
     );
 
     try {
-      this.sendMessageToParent(message, this.getAllowedOrigin());
+      this.sendMessageToParent(message, super.getAllowedOrigin());
     } catch (error) {
       clearTimeout(timeout);
       this.removeMessageListener(
@@ -222,7 +222,7 @@ export class PaymentManager extends CommunicationManager {
     this.setupReturnUrlHandler(memo, resolve, reject);
 
     // Open payment page in current window
-    const paymentUrl = new URL(this.getAllowedOrigin());
+    const paymentUrl = new URL(super.getAllowedOrigin());
     paymentUrl.pathname = `/${message.payload.address}`;
 
     // Encode all parameters properly
@@ -337,14 +337,5 @@ export class PaymentManager extends CommunicationManager {
       },
       process.env.NODE_ENV === 'test' ? TEST_TIMEOUT_MS : PAYMENT_TIMEOUT_MS,
     );
-  }
-
-  /**
-   * Get the allowed origin for this payment manager.
-   *
-   * @returns The allowed origin
-   */
-  protected getAllowedOrigin(): string {
-    return super['allowedOrigin'];
   }
 }

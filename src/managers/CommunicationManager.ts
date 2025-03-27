@@ -26,6 +26,16 @@ export class CommunicationManager {
     }
   }
 
+  /**
+   * Gets the allowed origin for communication.
+   *
+   * @returns The allowed origin string
+   * @protected
+   */
+  protected getAllowedOrigin(): string {
+    return this.allowedOrigin;
+  }
+
   private setupMessageListener(): void {
     const win = getSafeWindow();
     if (!win) {
