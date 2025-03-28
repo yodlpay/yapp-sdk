@@ -1,5 +1,10 @@
 import { PaymentConfig } from './config';
-import { Payment, UserContext } from './messagePayload';
+import {
+  Payment,
+  SiweRequestData,
+  SiweResponseData,
+  UserContext,
+} from './messagePayload';
 import { Hex } from './utils';
 
 const MESSAGE_RESPONSE_PAYLOADS = {
@@ -7,6 +12,7 @@ const MESSAGE_RESPONSE_PAYLOADS = {
   PAYMENT_CANCELLED: undefined,
   USER_CONTEXT_RESPONSE: {} as UserContext,
   ENS_NOT_FOUND: undefined, // When user request payment for an ENS name that is not found
+  SIWE_RESPONSE: {} as SiweResponseData, // Response from SIWE message signing
 } as const;
 
 const MESSAGE_REQUEST_PAYLOADS = {
@@ -19,6 +25,7 @@ const MESSAGE_REQUEST_PAYLOADS = {
   },
   USER_CONTEXT_REQUEST: undefined,
   CLOSE: undefined,
+  SIWE_REQUEST: {} as SiweRequestData, // Request to sign a SIWE message
 } as const;
 
 export const MESSAGE_RESPONSE_TYPE = Object.keys(
