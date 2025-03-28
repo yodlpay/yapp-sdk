@@ -7,6 +7,7 @@ import {
 } from '@constants';
 import {
   FiatCurrency,
+  GetPaymentsQuery,
   Hex,
   MESSAGE_RESPONSE_TYPE,
   Payment,
@@ -441,5 +442,28 @@ export class PaymentManager extends CommunicationManager {
     }
 
     throw new Error('Invalid payment status');
+  }
+
+  /**
+   * Get payments for a given query.
+   *
+   * @param query - The query to get payments for
+   * @returns Promise that resolves with payments
+   * @throws {Error} If the SDK is not initialized or request times out
+   */
+  public async getPayments(query: Partial<GetPaymentsQuery>) {
+    const url = new URL(`${this.getApiUrl()}/api/v1/payments`);
+
+    // Add all query parameters from the GetPaymentsQuery
+    Object.entries(query).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      url.searchParams.append(key, String(value));
+    });
+
+    const response = await fetch(url);
+
+    const payments = (await response.json()) as PaymentStatus[];
+
+    return payments;
   }
 }

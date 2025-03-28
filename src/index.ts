@@ -1,5 +1,6 @@
 import { CommunicationManager, PaymentManager } from '@managers';
 import {
+  GetPaymentsQuery,
   Hex,
   Payment,
   PaymentConfig,
@@ -216,6 +217,17 @@ class YappSDK {
    */
   public async getPayment(txHash: Hex) {
     return await this.paymentManager.getPayment(txHash);
+  }
+
+  /**
+   * Get payments for a given query.
+   *
+   * @param query - The query to get payments for
+   * @returns Promise that resolves with payments
+   * @throws {Error} If the SDK is not initialized or request times out
+   */
+  public async getPayments(query: Partial<GetPaymentsQuery>) {
+    return await this.paymentManager.getPayments(query);
   }
 
   /**
