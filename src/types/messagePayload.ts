@@ -43,5 +43,6 @@ export interface SiweRequestData {
 
 export interface SiweResponseData {
   signature: string;
+  message: string;
   address: string;
 }
