@@ -106,6 +106,7 @@ class YappSDK {
       config.apiUrl,
     );
     this.paymentManager = new PaymentManager(config.origin, config.apiUrl);
+    this.communityManager = new CommunityManager();
   }
 
   /**
