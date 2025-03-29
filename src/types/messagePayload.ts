@@ -18,6 +18,17 @@ export interface Community {
 }
 
 /**
+ * Community information structure
+ */
+export interface CommunityConfiguration {
+  yapps: string[]; // ENS names of Yapps featured in the community page
+  provider: {
+    members: string; // ENS that you gave permission that if that follows people then they become members
+    yapps: string; // ENS that follows yapps that are visible in the community page
+  };
+}
+
+/**
  * UserContext response payload
  */
 export interface UserContext {

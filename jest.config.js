@@ -21,5 +21,6 @@ module.exports = {
     '^@managers(.*)$': '<rootDir>/src/managers$1',
     '^@constants(.*)$': '<rootDir>/src/constants$1',
     '^@types(.*)$': '<rootDir>/src/types$1',
+    '^@services(.*)$': '<rootDir>/src/services$1',
   },
 };
