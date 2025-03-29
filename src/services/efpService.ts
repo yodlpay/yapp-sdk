@@ -22,7 +22,7 @@ function constructUrlWithParams(
   endpoint: string,
   options?: EfpFetchOptions,
 ): string {
-  if (!options) return endpoint;
+  if (!options) return `${API_BASE_URL_EFP}${endpoint}`;
 
   const params = new URLSearchParams();
 
