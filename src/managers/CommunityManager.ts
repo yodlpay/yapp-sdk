@@ -48,7 +48,7 @@ export class CommunityManager {
    * @returns The followers of the community
    */
   public async getCommunityFollowers(ens: string) {
-    const followers = await fetchFollowers(ens);
+    const { followers } = await fetchFollowers(ens);
     return followers;
   }
 
@@ -58,7 +58,7 @@ export class CommunityManager {
    * @returns The accounts that the memberProvider is following, representing the community members
    */
   public async getCommunityMembers(memberProvider: string) {
-    const members = await fetchFollowing(memberProvider);
-    return members;
+    const { following } = await fetchFollowing(memberProvider);
+    return following;
   }
 }

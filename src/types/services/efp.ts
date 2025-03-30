@@ -9,7 +9,7 @@ export interface EfpFollowing {
   version: number;
   record_type: string;
   data: string;
-  address?: string;
+  address?: Hex;
   tags: string[];
 }
 
