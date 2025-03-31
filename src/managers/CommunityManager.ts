@@ -1,12 +1,13 @@
+import { JustaName } from '@justaname.id/sdk';
 import { fetchFollowers, fetchFollowing } from '@services';
 import { CommunityConfiguration } from '@types';
 import { justaname } from '@utils';
 
 export class CommunityManager {
-  private justaname: typeof justaname;
+  private justaname: JustaName;
 
-  constructor() {
-    this.justaname = justaname;
+  constructor(providerUrl: string) {
+    this.justaname = justaname(providerUrl);
   }
 
   /**

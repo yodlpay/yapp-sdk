@@ -76,37 +76,29 @@ class YappSDK {
   /** Instance of CommunityManager handling community operations */
   private communityManager!: CommunityManager;
 
-  /** @internal */
-  private config!: YappSDKConfig;
-
   /**
    * Creates a new instance of YappSDK.
    *
    * @param config - Configuration options for the SDK
-   * @param config.origin - The allowed origin domain (defaults to 'https://yodl.me')
    */
   constructor(config?: Partial<YappSDKConfig>) {
-    this.config = {
-      origin: config?.origin || 'https://yodl.me',
-      apiUrl: config?.apiUrl || 'https://tx.yodl.me',
-    } as YappSDKConfig;
+    const defaults: YappSDKConfig = {
+      origin: 'https://yodl.me',
+      apiUrl: 'https://tx.yodl.me',
+      mainnetRpcUrl: 'https://eth.blockrazor.xyz',
+    };
 
-    this.initialize(this.config);
-  }
+    const finalConfig = { ...defaults, ...config };
 
-  /**
-   * Initializes the managers with the provided config.
-   *
-   * @param config - Configuration options
-   * @private
-   */
-  private async initialize(config: YappSDKConfig) {
     this.communicationManager = new CommunicationManager(
-      config.origin,
-      config.apiUrl,
+      finalConfig.origin,
+      finalConfig.apiUrl,
     );
-    this.paymentManager = new PaymentManager(config.origin, config.apiUrl);
-    this.communityManager = new CommunityManager();
+    this.paymentManager = new PaymentManager(
+      finalConfig.origin,
+      finalConfig.apiUrl,
+    );
+    this.communityManager = new CommunityManager(finalConfig.mainnetRpcUrl);
   }
 
   /**
