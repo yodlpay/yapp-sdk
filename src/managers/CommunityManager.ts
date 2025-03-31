@@ -59,7 +59,7 @@ export class CommunityManager {
    * @returns The accounts that the memberProvider is following, representing the community members
    */
   public async getCommunityMembers(memberProvider: string) {
-    const { following } = await fetchFollowing(memberProvider);
-    return following;
+    const { following: members } = await fetchFollowing(memberProvider);
+    return members;
   }
 }
