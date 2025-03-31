@@ -1,4 +1,8 @@
-import { CommunicationManager, PaymentManager } from '@managers';
+import {
+  CommunicationManager,
+  CommunityManager,
+  PaymentManager,
+} from '@managers';
 import {
   GetPaymentsQuery,
   Hex,
@@ -69,36 +73,26 @@ class YappSDK {
   /** Instance of PaymentManager handling payment operations */
   private paymentManager!: PaymentManager;
 
-  /** @internal */
-  private config!: YappSDKConfig;
+  /** Instance of CommunityManager handling community operations */
+  private communityManager!: CommunityManager;
 
   /**
    * Creates a new instance of YappSDK.
    *
    * @param config - Configuration options for the SDK
-   * @param config.origin - The allowed origin domain (defaults to 'https://yodl.me')
    */
   constructor(config?: Partial<YappSDKConfig>) {
-    this.config = {
-      origin: config?.origin || 'https://yodl.me',
-      apiUrl: config?.apiUrl || 'https://tx.yodl.me',
-    } as YappSDKConfig;
+    const defaults: YappSDKConfig = {
+      origin: 'https://yodl.me',
+      apiUrl: 'https://tx.yodl.me',
+      mainnetRpcUrl: 'https://eth.blockrazor.xyz',
+    };
 
-    this.initialize(this.config);
-  }
+    const finalConfig = { ...defaults, ...config };
 
-  /**
-   * Initializes the managers with the provided config.
-   *
-   * @param config - Configuration options
-   * @private
-   */
-  private async initialize(config: YappSDKConfig) {
-    this.communicationManager = new CommunicationManager(
-      config.origin,
-      config.apiUrl,
-    );
-    this.paymentManager = new PaymentManager(config.origin, config.apiUrl);
+    this.communicationManager = new CommunicationManager(finalConfig);
+    this.paymentManager = new PaymentManager(finalConfig);
+    this.communityManager = new CommunityManager(finalConfig);
   }
 
   /**
@@ -239,6 +233,50 @@ class YappSDK {
   public close(targetOrigin: string): void {
     this.ensureInitialized();
     this.communicationManager.sendCloseMessage(targetOrigin);
+  }
+
+  /**
+   * Get the community configuration for a given ENS name.
+   *
+   * @param ens - The ENS name of the community
+   * @returns Promise that resolves with community configuration
+   * @throws {Error} If the SDK is not initialized or request times out
+   */
+  public async getCommunityConfiguration(ens: string) {
+    return await this.communityManager.getCommunityConfiguration(ens);
+  }
+
+  /**
+   * Get the community followers for a given ENS name.
+   *
+   * @param ens - The ENS name of the community
+   * @returns Promise that resolves with community followers
+   * @throws {Error} If the SDK is not initialized or request times out
+   */
+  public async getCommunityFollowers(ens: string) {
+    return await this.communityManager.getCommunityFollowers(ens);
+  }
+
+  /**
+   * Get the community members for a given member provider.
+   *
+   * @param memberProvider - The address or ENS name of the account that follows community members
+   * @returns Promise that resolves with community members
+   * @throws {Error} If the SDK is not initialized or request times out
+   *
+   * @example
+   * ```typescript
+   * // First get the community configuration to find the member provider
+   * const communityConfig = await sdk.getCommunityConfiguration('mycommunity.eth');
+   * const memberProvider = communityConfig.config.memberProvider;
+   *
+   * // Then get the members using the provider
+   * const members = await sdk.getCommunityMembers(memberProvider);
+   * console.log('Community members:', members);
+   * ```
+   */
+  public async getCommunityMembers(memberProvider: string) {
+    return await this.communityManager.getCommunityMembers(memberProvider);
   }
 }
 
