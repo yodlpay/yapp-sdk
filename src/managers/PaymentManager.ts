@@ -14,6 +14,7 @@ import {
   PaymentConfig,
   PaymentStatus,
   RequestMessage,
+  YappSDKConfig,
 } from '@types';
 import {
   createRequestMessage,
@@ -37,11 +38,10 @@ export class PaymentManager extends CommunicationManager {
   /**
    * Creates a new PaymentManager instance.
    *
-   * @param allowedOrigin - The allowed origin for communication
-   * @param apiUrl - The API URL
+   * @param config - The configuration options for the SDK
    */
-  constructor(allowedOrigin: string, apiUrl: string) {
-    super(allowedOrigin, apiUrl);
+  constructor(config: YappSDKConfig) {
+    super(config);
   }
 
   /**

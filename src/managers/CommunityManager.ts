@@ -1,13 +1,13 @@
 import { JustaName } from '@justaname.id/sdk';
 import { fetchFollowers, fetchFollowing } from '@services';
-import { CommunityConfiguration } from '@types';
+import { CommunityConfiguration, YappSDKConfig } from '@types';
 import { justaname } from '@utils';
 
 export class CommunityManager {
   private justaname: JustaName;
 
-  constructor(providerUrl: string) {
-    this.justaname = justaname(providerUrl);
+  constructor(config: YappSDKConfig) {
+    this.justaname = justaname(config.mainnetRpcUrl);
   }
 
   /**

@@ -90,15 +90,9 @@ class YappSDK {
 
     const finalConfig = { ...defaults, ...config };
 
-    this.communicationManager = new CommunicationManager(
-      finalConfig.origin,
-      finalConfig.apiUrl,
-    );
-    this.paymentManager = new PaymentManager(
-      finalConfig.origin,
-      finalConfig.apiUrl,
-    );
-    this.communityManager = new CommunityManager(finalConfig.mainnetRpcUrl);
+    this.communicationManager = new CommunicationManager(finalConfig);
+    this.paymentManager = new PaymentManager(finalConfig);
+    this.communityManager = new CommunityManager(finalConfig);
   }
 
   /**
