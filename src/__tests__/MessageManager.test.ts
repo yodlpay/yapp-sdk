@@ -1,3 +1,4 @@
+import { YappSDKConfig } from '../types/config';
 import { FiatCurrency } from '../types/currency';
 import { Hex } from '../types/utils';
 import * as isInIframeModule from '../utils/isInIframe';
@@ -12,9 +13,16 @@ jest.mock('../utils/memoValidation');
 
 describe('MessageManager', () => {
   // Test constants
-  const TEST_CONSTANTS = {
-    ORIGIN: 'https://test-origin.com',
-    API_URL: 'https://test-api.com',
+  const TEST_CONSTANTS: YappSDKConfig & {
+    ADDRESS: Hex;
+    MEMO: string;
+    REDIRECT_URL: string;
+    TX_HASH: Hex;
+    CHAIN_ID: number;
+  } = {
+    origin: 'https://test-origin.com',
+    apiUrl: 'https://test-api.com',
+    mainnetRpcUrl: 'https://test-rpc.com',
     ADDRESS: '0x123456789abcdef' as Hex,
     MEMO: 'test-memo',
     REDIRECT_URL: 'https://redirect-url.com',
@@ -119,7 +127,7 @@ describe('MessageManager', () => {
         set: jest.fn(),
         get: jest.fn(),
       },
-      toString: jest.fn().mockReturnValue(TEST_CONSTANTS.ORIGIN),
+      toString: jest.fn().mockReturnValue(TEST_CONSTANTS.origin),
     };
 
     global.URL = jest.fn().mockImplementation((url) => {
@@ -162,15 +170,12 @@ describe('MessageManager', () => {
    */
   describe('constructor', () => {
     it('should initialize with the provided origin', () => {
-      const manager = new MessageManager(
-        TEST_CONSTANTS.ORIGIN,
-        TEST_CONSTANTS.API_URL,
-      );
-      expect(manager['allowedOrigin']).toBe(TEST_CONSTANTS.ORIGIN);
+      const manager = new MessageManager(TEST_CONSTANTS);
+      expect(manager['allowedOrigin']).toBe(TEST_CONSTANTS.origin);
     });
 
     it('should set up message listener if in browser environment', () => {
-      new MessageManager(TEST_CONSTANTS.ORIGIN, TEST_CONSTANTS.API_URL);
+      new MessageManager(TEST_CONSTANTS);
       expect(mockAddEventListener).toHaveBeenCalledWith(
         'message',
         expect.any(Function),
@@ -179,7 +184,7 @@ describe('MessageManager', () => {
 
     it('should not set up message listener if not in browser environment', () => {
       (safeWindowModule.isBrowser as jest.Mock).mockReturnValue(false);
-      new MessageManager(TEST_CONSTANTS.ORIGIN, TEST_CONSTANTS.API_URL);
+      new MessageManager(TEST_CONSTANTS);
       expect(mockAddEventListener).not.toHaveBeenCalled();
     });
   });
@@ -189,19 +194,13 @@ describe('MessageManager', () => {
    */
   describe('isOriginAllowed', () => {
     it('should return true for matching origins', () => {
-      const manager = new MessageManager(
-        TEST_CONSTANTS.ORIGIN,
-        TEST_CONSTANTS.API_URL,
-      );
-      const result = manager['isOriginAllowed'](TEST_CONSTANTS.ORIGIN);
+      const manager = new MessageManager(TEST_CONSTANTS);
+      const result = manager['isOriginAllowed'](TEST_CONSTANTS.origin);
       expect(result).toBe(true);
     });
 
     it('should return false for non-matching origins', () => {
-      const manager = new MessageManager(
-        TEST_CONSTANTS.ORIGIN,
-        TEST_CONSTANTS.API_URL,
-      );
+      const manager = new MessageManager(TEST_CONSTANTS);
       // Mock the implementation to return false for different origins
       jest.spyOn(manager as any, 'isOriginAllowed').mockReturnValue(false);
       const result = manager['isOriginAllowed']('https://different-origin.com');
@@ -209,10 +208,7 @@ describe('MessageManager', () => {
     });
 
     it('should handle invalid origin formats gracefully', () => {
-      const manager = new MessageManager(
-        TEST_CONSTANTS.ORIGIN,
-        TEST_CONSTANTS.API_URL,
-      );
+      const manager = new MessageManager(TEST_CONSTANTS);
       // Mock the implementation to return false for invalid URLs
       jest.spyOn(manager as any, 'isOriginAllowed').mockReturnValue(false);
       const result = manager['isOriginAllowed']('invalid-url');
@@ -227,10 +223,7 @@ describe('MessageManager', () => {
     // Input validation tests
     describe('input validation', () => {
       it.skip('should validate memo size', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
         (memoValidationModule.isValidMemoSize as jest.Mock).mockReturnValue(
           false,
         );
@@ -245,10 +238,7 @@ describe('MessageManager', () => {
       });
 
       it.skip('should validate currency', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
 
         await expect(
           manager.sendPaymentRequest(TEST_CONSTANTS.ADDRESS, {
@@ -259,10 +249,7 @@ describe('MessageManager', () => {
       });
 
       it.skip('should validate amount is positive', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
 
         await expect(
           manager.sendPaymentRequest(TEST_CONSTANTS.ADDRESS, {
@@ -273,10 +260,7 @@ describe('MessageManager', () => {
       });
 
       it.skip('should validate amount is not zero', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
 
         await expect(
           manager.sendPaymentRequest(TEST_CONSTANTS.ADDRESS, {
@@ -287,10 +271,7 @@ describe('MessageManager', () => {
       });
 
       it.skip('should require redirectUrl when not in iframe', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
         (isInIframeModule.isInIframe as jest.Mock).mockReturnValue(false);
 
         await expect(
@@ -307,10 +288,7 @@ describe('MessageManager', () => {
     // Iframe payment flow tests
     describe('iframe payment flow', () => {
       it.skip('should handle iframe payment flow', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
         (isInIframeModule.isInIframe as jest.Mock).mockReturnValue(true);
 
         // Spy on the sendMessageToParent method to avoid actual implementation
@@ -357,10 +335,7 @@ describe('MessageManager', () => {
       }, 10000); // Increase timeout for this test
 
       it.skip('should handle payment cancellation in iframe', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
         (isInIframeModule.isInIframe as jest.Mock).mockReturnValue(true);
 
         // Spy on the handleIframePayment method to avoid actual implementation
@@ -391,10 +366,7 @@ describe('MessageManager', () => {
       }, 10000); // Add timeout to match other tests
 
       it.skip('should handle payment timeout in iframe', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
         (isInIframeModule.isInIframe as jest.Mock).mockReturnValue(true);
 
         // Spy on the handleIframePayment method to avoid actual implementation
@@ -430,10 +402,7 @@ describe('MessageManager', () => {
     // Redirect payment flow tests
     describe('redirect payment flow', () => {
       it.skip('should handle redirect payment flow', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
         (isInIframeModule.isInIframe as jest.Mock).mockReturnValue(false);
 
         // Spy on the handleRedirectPayment method to avoid actual implementation
@@ -488,10 +457,7 @@ describe('MessageManager', () => {
       }, 10000); // Add timeout
 
       it.skip('should handle redirect payment cancellation', async () => {
-        const manager = new MessageManager(
-          TEST_CONSTANTS.ORIGIN,
-          TEST_CONSTANTS.API_URL,
-        );
+        const manager = new MessageManager(TEST_CONSTANTS);
         (isInIframeModule.isInIframe as jest.Mock).mockReturnValue(false);
 
         // Spy on the handleRedirectPayment method to avoid actual implementation
@@ -544,23 +510,17 @@ describe('MessageManager', () => {
    */
   describe('sendCloseMessage', () => {
     it('should send close message to parent window', () => {
-      const manager = new MessageManager(
-        TEST_CONSTANTS.ORIGIN,
-        TEST_CONSTANTS.API_URL,
-      );
-      manager.sendCloseMessage(TEST_CONSTANTS.ORIGIN);
+      const manager = new MessageManager(TEST_CONSTANTS);
+      manager.sendCloseMessage(TEST_CONSTANTS.origin);
 
       expect(mockParentPostMessage).toHaveBeenCalledWith(
         { type: 'CLOSE' },
-        TEST_CONSTANTS.ORIGIN,
+        TEST_CONSTANTS.origin,
       );
     });
 
     it.skip('should throw error for invalid origin', () => {
-      const manager = new MessageManager(
-        TEST_CONSTANTS.ORIGIN,
-        TEST_CONSTANTS.API_URL,
-      );
+      const manager = new MessageManager(TEST_CONSTANTS);
 
       // Mock isOriginAllowed to return false for different origins
       jest.spyOn(manager as any, 'isOriginAllowed').mockReturnValue(false);
@@ -571,14 +531,11 @@ describe('MessageManager', () => {
     });
 
     it.skip('should throw error when not in iframe', () => {
-      const manager = new MessageManager(
-        TEST_CONSTANTS.ORIGIN,
-        TEST_CONSTANTS.API_URL,
-      );
+      const manager = new MessageManager(TEST_CONSTANTS);
       mockWindow.parent = mockWindow; // Make window.parent === window
 
       expect(() => {
-        manager.sendCloseMessage(TEST_CONSTANTS.ORIGIN);
+        manager.sendCloseMessage(TEST_CONSTANTS.origin);
       }).toThrow('Cannot send message: SDK is not running in an iframe');
     });
   });

@@ -1,6 +1,6 @@
 import { CommunicationManager } from '../../managers/CommunicationManager';
 import { PaymentManager } from '../../managers/PaymentManager';
-import { PaymentConfig } from '../../types/config';
+import { PaymentConfig, YappSDKConfig } from '../../types/config';
 import { Payment, UserContext } from '../../types/messagePayload';
 import { RequestMessage } from '../../types/messages';
 import { Hex } from '../../types/utils';
@@ -20,10 +20,10 @@ export class MessageManager {
   /** @internal For testing purposes only */
   public readonly allowedOrigin: string;
 
-  constructor(allowedOrigin: string, apiUrl: string) {
-    this.allowedOrigin = allowedOrigin;
-    this.communicationManager = new CommunicationManager(allowedOrigin, apiUrl);
-    this.paymentManager = new PaymentManager(allowedOrigin, apiUrl);
+  constructor(config: YappSDKConfig) {
+    this.allowedOrigin = config.origin;
+    this.communicationManager = new CommunicationManager(config);
+    this.paymentManager = new PaymentManager(config);
   }
 
   public getUserContext(): Promise<UserContext> {

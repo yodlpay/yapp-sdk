@@ -1,3 +1,4 @@
+import { YappSDKConfig } from '../types/config';
 import * as safeWindowModule from '../utils/safeWindow';
 import { MessageManager } from './utils/TestMessageManagerAdapter';
 
@@ -22,6 +23,11 @@ describe('UserContext', () => {
     COMMUNITY_ENS: 'community.eth',
     COMMUNITY_USER_ENS: 'user.community.eth',
   };
+  const TEST_CONSTANTS: YappSDKConfig = {
+    origin: 'https://test-origin.com',
+    apiUrl: 'https://test-api.com',
+    mainnetRpcUrl: 'https://test-rpc.com',
+  };
 
   beforeEach(() => {
     // Reset all mocks
@@ -42,10 +48,7 @@ describe('UserContext', () => {
       // Mock getSafeWindow to return null
       (safeWindowModule.getSafeWindow as jest.Mock).mockReturnValue(null);
 
-      const messageManager = new MessageManager(
-        'https://test-origin.com',
-        'https://test-api.com',
-      );
+      const messageManager = new MessageManager(TEST_CONSTANTS);
 
       await expect(messageManager.getUserContext()).rejects.toThrow(
         'Cannot access window object',
@@ -53,10 +56,7 @@ describe('UserContext', () => {
     });
 
     it('should timeout after 5 seconds when no response is received', async () => {
-      const messageManager = new MessageManager(
-        'https://test-origin.com',
-        'https://test-api.com',
-      );
+      const messageManager = new MessageManager(TEST_CONSTANTS);
 
       // Start the request
       const promise = messageManager.getUserContext();
@@ -68,10 +68,7 @@ describe('UserContext', () => {
     });
 
     it('should register and remove event listeners properly', async () => {
-      const messageManager = new MessageManager(
-        'https://test-origin.com',
-        'https://test-api.com',
-      );
+      const messageManager = new MessageManager(TEST_CONSTANTS);
 
       // Start the request but don't await it
       messageManager.getUserContext().catch(() => {});
@@ -90,10 +87,7 @@ describe('UserContext', () => {
     });
 
     it('should process response with nested community structure correctly', async () => {
-      const messageManager = new MessageManager(
-        'https://test-origin.com',
-        'https://test-api.com',
-      );
+      const messageManager = new MessageManager(TEST_CONSTANTS);
 
       // Start the request
       const contextPromise = messageManager.getUserContext();
@@ -132,10 +126,7 @@ describe('UserContext', () => {
     });
 
     it('should process response with null community correctly', async () => {
-      const messageManager = new MessageManager(
-        'https://test-origin.com',
-        'https://test-api.com',
-      );
+      const messageManager = new MessageManager(TEST_CONSTANTS);
 
       // Start the request
       const contextPromise = messageManager.getUserContext();
@@ -166,10 +157,7 @@ describe('UserContext', () => {
     });
 
     it('should process response with undefined community correctly', async () => {
-      const messageManager = new MessageManager(
-        'https://test-origin.com',
-        'https://test-api.com',
-      );
+      const messageManager = new MessageManager(TEST_CONSTANTS);
 
       // Start the request
       const contextPromise = messageManager.getUserContext();
