@@ -3,6 +3,7 @@ import {
   RequestMessage,
   ResponseMessage,
   UserContext,
+  YappSDKConfig,
 } from '@types';
 import { createRequestMessage, getSafeWindow, isBrowser } from '@utils';
 
@@ -21,9 +22,9 @@ export class CommunicationManager {
   private messageListeners: Map<string, ((response: any) => void)[]> =
     new Map();
 
-  constructor(allowedOrigin: string, apiUrl: string) {
-    this.allowedOrigin = allowedOrigin;
-    this.apiUrl = apiUrl;
+  constructor(config: YappSDKConfig) {
+    this.allowedOrigin = config.origin;
+    this.apiUrl = config.apiUrl;
     if (isBrowser()) {
       this.setupMessageListener();
     }

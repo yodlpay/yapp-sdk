@@ -17,7 +17,8 @@
       "@utils": ["src/utils"],
       "@managers": ["src/managers"],
       "@constants": ["src/constants"],
-      "@types": ["src/types"]
+      "@types": ["src/types"],
+      "@services": ["src/services"]
     },
     "rootDir": "src"
   },

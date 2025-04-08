@@ -15,6 +15,8 @@ export interface YappSDKConfig {
   origin: string;
   /** URL of the API */
   apiUrl: string;
+  /** URL of the mainnet RPC */
+  mainnetRpcUrl: string;
 }
 
 /**
