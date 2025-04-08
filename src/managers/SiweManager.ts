@@ -3,10 +3,11 @@ import { MESSAGE_RESPONSE_TYPE, RequestMessage } from '../types/messages';
 import { SiweRequestData, SiweResponseData } from '../types/messagePayload';
 import { createRequestMessage } from '../utils/messageUtils';
 import { isInIframe } from '../utils/isInIframe';
+import { YappSDKConfig } from '@types';
 
 export class SiweManager extends CommunicationManager {
-  constructor(allowedOrigin: string, apiUrl: string) {
-    super(allowedOrigin, apiUrl);
+  constructor(config: YappSDKConfig) {
+    super(config);
   }
 
   /**
