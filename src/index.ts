@@ -1,5 +1,6 @@
 import {
   CommunicationManager,
+  SiweManager,
   CommunityManager,
   PaymentManager,
 } from '@managers';
@@ -8,6 +9,8 @@ import {
   Hex,
   Payment,
   PaymentConfig,
+  SiweRequestData,
+  SiweResponseData,
   UserContext,
   YappSDKConfig,
 } from '@types';
@@ -73,6 +76,9 @@ class YappSDK {
   /** Instance of PaymentManager handling payment operations */
   private paymentManager!: PaymentManager;
 
+  /** Instance of SiweManager handling Sign-In with Ethereum operations */
+  private siweManager!: SiweManager;
+
   /** Instance of CommunityManager handling community operations */
   private communityManager!: CommunityManager;
 
@@ -93,6 +99,7 @@ class YappSDK {
     this.communicationManager = new CommunicationManager(finalConfig);
     this.paymentManager = new PaymentManager(finalConfig);
     this.communityManager = new CommunityManager(finalConfig);
+    this.siweManager = new SiweManager(finalConfig);
   }
 
   /**
@@ -101,7 +108,11 @@ class YappSDK {
    * @throws {Error} If the SDK is not initialized
    */
   private ensureInitialized(): void {
-    if (!this.communicationManager || !this.paymentManager) {
+    if (
+      !this.communicationManager ||
+      !this.paymentManager ||
+      !this.siweManager
+    ) {
       throw new Error(
         'SDK not initialized. Please wait for initialization to complete.',
       );
@@ -222,6 +233,44 @@ class YappSDK {
    */
   public async getPayments(query: Partial<GetPaymentsQuery>) {
     return await this.paymentManager.getPayments(query);
+  }
+
+  /**
+   * Signs a SIWE (Sign-In with Ethereum) message using the connected wallet
+   *
+   * @param siweData - The SIWE message data to be signed
+   * @returns Promise that resolves with a signature and address when successful
+   * @throws {Error} If the SDK is not initialized, signature is cancelled, or times out
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const response = await sdk.signSiweMessage({
+   *     domain: 'example.com',
+   *     uri: 'https://example.com/login',
+   *     version: '1',
+   *     chainId: 1,
+   *     nonce: 'random-nonce-123',
+   *     issuedAt: new Date().toISOString(),
+   *     statement: 'Sign in with Ethereum to the app.'
+   *   });
+   *
+   *   console.log('Signature:', response.signature);
+   *   console.log('Address:', response.address);
+   * } catch (error) {
+   *   if (error.message === 'Signature request was cancelled') {
+   *     console.log('User cancelled the signing request');
+   *   } else {
+   *     console.error('Signing failed:', error.message);
+   *   }
+   * }
+   * ```
+   */
+  public async signSiweMessage(
+    siweData: SiweRequestData,
+  ): Promise<SiweResponseData> {
+    this.ensureInitialized();
+    return await this.siweManager.signSiweMessage(siweData);
   }
 
   /**

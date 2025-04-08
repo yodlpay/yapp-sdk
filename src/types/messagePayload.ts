@@ -36,3 +36,24 @@ export interface UserContext {
   primaryEnsName?: string; // Primary ENS name of user
   community?: Community | null; // Community information (null if not in a community)
 }
+
+export interface SiweRequestData {
+  address: string;
+  domain: string;
+  uri: string;
+  nonce?: string; // default to now in epoch
+  statement?: string;
+  chainId?: number; // default to mainnet
+  version?: string; // default to 1
+  issuedAt?: string; // default to now
+  expirationTime?: string;
+  notBefore?: string;
+  requestId?: string;
+  resources?: string[];
+}
+
+export interface SiweResponseData {
+  signature: string;
+  message: string;
+  address: string;
+}
