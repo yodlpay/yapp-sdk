@@ -99,7 +99,7 @@ class YappSDK {
     this.communicationManager = new CommunicationManager(finalConfig);
     this.paymentManager = new PaymentManager(finalConfig);
     this.communityManager = new CommunityManager(finalConfig);
-    this.siweManager = new SiweManager(finalConfig.origin, finalConfig.apiUrl);
+    this.siweManager = new SiweManager(finalConfig);
   }
 
   /**
