@@ -86,12 +86,7 @@ export class PaymentManager extends CommunicationManager {
         return;
       }
 
-      const message = createRequestMessage('PAYMENT_REQUEST', {
-        addressOrEns: paymentData.addressOrEns,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        memo: paymentData.memo,
-      });
+      const message = createRequestMessage('PAYMENT_REQUEST', paymentData);
 
       // Check if running in iframe
       if (isInIframe()) {
