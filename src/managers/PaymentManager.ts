@@ -11,7 +11,7 @@ import {
   Hex,
   MESSAGE_RESPONSE_TYPE,
   Payment,
-  PaymentConfig,
+  PaymentRequestData,
   PaymentStatus,
   RequestMessage,
   YappSDKConfig,
@@ -50,8 +50,7 @@ export class PaymentManager extends CommunicationManager {
    * - Iframe mode: Uses postMessage API for communication
    * - Redirect mode: Uses URL parameters and page redirects
    *
-   * @param addressOrEns - The recipient's blockchain address or ENS name
-   * @param config - Payment configuration options including amount, currency, memo, and redirectUrl
+   * @param paymentData - Payment configuration options including addressOrEns, amount, currency, memo, and redirectUrl
    * @returns Promise that resolves with payment response containing txHash and chainId
    * @throws {Error} If:
    *   - Payment is cancelled ("Payment was cancelled")
@@ -63,38 +62,35 @@ export class PaymentManager extends CommunicationManager {
    *   - Message is sent to an invalid origin
    *   - ENS name is not found ("ENS name not found: [name]")
    */
-  public sendPaymentRequest(
-    addressOrEns: string,
-    config: PaymentConfig,
-  ): Promise<Payment> {
+  public sendPaymentRequest(paymentData: PaymentRequestData): Promise<Payment> {
     return new Promise((resolve, reject) => {
       // Validate memo size
-      if (config.memo && !isValidMemoSize(config.memo)) {
+      if (paymentData.memo && !isValidMemoSize(paymentData.memo)) {
         reject(new Error('Memo exceeds maximum size of 32 bytes'));
         return;
       }
 
       // Validate currency
-      if (!isValidFiatCurrency(config.currency)) {
+      if (!isValidFiatCurrency(paymentData.currency)) {
         reject(
           new Error(
-            `Invalid currency "${config.currency}". Must be one of: ${Object.values(FiatCurrency).join(', ')}`,
+            `Invalid currency "${paymentData.currency}". Must be one of: ${Object.values(FiatCurrency).join(', ')}`,
           ),
         );
         return;
       }
 
       // Validate amount
-      if (typeof config.amount !== 'number' || config.amount <= 0) {
+      if (typeof paymentData.amount !== 'number' || paymentData.amount <= 0) {
         reject(new Error('Amount must be a positive number'));
         return;
       }
 
       const message = createRequestMessage('PAYMENT_REQUEST', {
-        addressOrEns,
-        amount: config.amount,
-        currency: config.currency,
-        memo: config.memo,
+        addressOrEns: paymentData.addressOrEns,
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        memo: paymentData.memo,
       });
 
       // Check if running in iframe
@@ -103,7 +99,7 @@ export class PaymentManager extends CommunicationManager {
         return;
       }
 
-      if (!config.redirectUrl) {
+      if (!paymentData.redirectUrl) {
         reject(
           new Error(
             'Redirect URL is required when running outside of an iframe',
@@ -112,7 +108,12 @@ export class PaymentManager extends CommunicationManager {
         return;
       }
 
-      this.handleRedirectPayment(message, config.redirectUrl, resolve, reject);
+      this.handleRedirectPayment(
+        message,
+        paymentData.redirectUrl,
+        resolve,
+        reject,
+      );
     });
   }
 

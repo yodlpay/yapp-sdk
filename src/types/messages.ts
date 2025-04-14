@@ -1,11 +1,10 @@
-import { PaymentConfig } from './config';
 import {
   Payment,
+  PaymentRequestData,
   SiweRequestData,
   SiweResponseData,
   UserContext,
 } from './messagePayload';
-import { Hex } from './utils';
 
 const MESSAGE_RESPONSE_PAYLOADS = {
   PAYMENT_SUCCESS: {} as Payment,
@@ -16,13 +15,7 @@ const MESSAGE_RESPONSE_PAYLOADS = {
 } as const;
 
 const MESSAGE_REQUEST_PAYLOADS = {
-  PAYMENT_REQUEST: {} as PaymentConfig & {
-    addressOrEns: string;
-    /**
-     * @deprecated Use addressOrEns instead
-     */
-    address?: Hex;
-  },
+  PAYMENT_REQUEST: {} as PaymentRequestData,
   USER_CONTEXT_REQUEST: undefined,
   CLOSE: undefined,
   SIWE_REQUEST: {} as SiweRequestData, // Request to sign a SIWE message
@@ -34,11 +27,11 @@ export const MESSAGE_RESPONSE_TYPE = Object.keys(
   [K in keyof typeof MESSAGE_RESPONSE_PAYLOADS]: K;
 };
 
-// export const MESSAGE_REQUEST_TYPE = Object.keys(
-//   MESSAGE_REQUEST_PAYLOADS,
-// ).reduce((acc, key) => ({ ...acc, [key]: key }), {}) as {
-//   [K in keyof typeof MESSAGE_REQUEST_PAYLOADS]: K;
-// };
+export const MESSAGE_REQUEST_TYPE = Object.keys(
+  MESSAGE_REQUEST_PAYLOADS,
+).reduce((acc, key) => ({ ...acc, [key]: key }), {}) as {
+  [K in keyof typeof MESSAGE_REQUEST_PAYLOADS]: K;
+};
 
 export type MessageResponseType = keyof typeof MESSAGE_RESPONSE_PAYLOADS;
 export type MessageRequestType = keyof typeof MESSAGE_REQUEST_PAYLOADS;

@@ -1,3 +1,4 @@
+import { FiatCurrency, FiatCurrencyString } from './currency';
 import { Hex } from './utils';
 
 /**
@@ -56,4 +57,30 @@ export interface SiweResponseData {
   signature: string;
   message: string;
   address: string;
+}
+
+/**
+ * Payment request configuration
+ *
+ * @example
+ * ```typescript
+ * const payment: PaymentConfig = {
+ *   addressOrEns: '0x1234567890123456789012345678901234567890',
+ *   amount: 99.99,
+ *   currency: FiatCurrency.USD,
+ *   memo: 'Premium subscription payment'
+ * };
+ * ```
+ */
+export interface PaymentRequestData {
+  /** The recipient's blockchain address or ENS name */
+  addressOrEns: string | Hex;
+  /** The payment amount */
+  amount: number;
+  /** The currency code */
+  currency: FiatCurrency | FiatCurrencyString;
+  /** Optional payment memo/description */
+  memo?: string;
+  /** Payment redirect URL - Required when application runs outside of an iframe */
+  redirectUrl?: string;
 }
