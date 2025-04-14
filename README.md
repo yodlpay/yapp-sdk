@@ -71,7 +71,8 @@ function PaymentExample() {
       const orderId = `order_${Date.now()}`;
 
       // Request payment
-      const response = await sdk.requestPayment(recipientAddress, {
+      const response = await sdk.requestPayment({
+        addressOrEns: recipientAddress,
         amount: 50,
         currency: FiatCurrency.USD,
         memo: orderId,
