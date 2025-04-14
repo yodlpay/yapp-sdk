@@ -1,8 +1,8 @@
 // Import YappSDK first to have it available
 import { CommunicationManager } from '../managers/CommunicationManager';
 import { PaymentManager } from '../managers/PaymentManager';
-import { PaymentConfig, YappSDKConfig } from '../types/config';
-import { Hex } from '../types/utils';
+import { YappSDKConfig } from '../types/config';
+import { PaymentRequestData } from '../types/messagePayload';
 
 // Mock the MessageManager module
 jest.mock('./utils/TestMessageManagerAdapter');
@@ -43,13 +43,13 @@ class MockYappSDK {
     return this._communicationManager.getUserContext();
   }
 
-  public async requestPayment(address: Hex, config: PaymentConfig) {
+  public async requestPayment(paymentData: PaymentRequestData) {
     if (!this._paymentManager) {
       throw new Error(
         'SDK not initialized. Please wait for initialization to complete.',
       );
     }
-    return this._paymentManager.sendPaymentRequest(address, config);
+    return this._paymentManager.sendPaymentRequest(paymentData);
   }
 
   public close(targetOrigin: string) {

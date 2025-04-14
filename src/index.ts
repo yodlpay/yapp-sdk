@@ -8,7 +8,7 @@ import {
   GetPaymentsQuery,
   Hex,
   Payment,
-  PaymentConfig,
+  PaymentRequestData,
   SiweRequestData,
   SiweResponseData,
   UserContext,
@@ -164,11 +164,10 @@ class YappSDK {
    * ```
    */
   public async requestPayment(
-    addressOrEns: string,
-    config: PaymentConfig,
+    paymentData: PaymentRequestData,
   ): Promise<Payment> {
     this.ensureInitialized();
-    return await this.paymentManager.sendPaymentRequest(addressOrEns, config);
+    return await this.paymentManager.sendPaymentRequest(paymentData);
   }
 
   /**

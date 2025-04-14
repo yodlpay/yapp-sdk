@@ -1,7 +1,11 @@
 import { CommunicationManager } from '../../managers/CommunicationManager';
 import { PaymentManager } from '../../managers/PaymentManager';
-import { PaymentConfig, YappSDKConfig } from '../../types/config';
-import { Payment, UserContext } from '../../types/messagePayload';
+import { YappSDKConfig } from '../../types/config';
+import {
+  Payment,
+  PaymentRequestData,
+  UserContext,
+} from '../../types/messagePayload';
 import { RequestMessage } from '../../types/messages';
 import { Hex } from '../../types/utils';
 
@@ -30,11 +34,8 @@ export class MessageManager {
     return this.communicationManager.getUserContext();
   }
 
-  public sendPaymentRequest(
-    address: Hex,
-    config: PaymentConfig,
-  ): Promise<Payment> {
-    return this.paymentManager.sendPaymentRequest(address, config);
+  public sendPaymentRequest(paymentData: PaymentRequestData): Promise<Payment> {
+    return this.paymentManager.sendPaymentRequest(paymentData);
   }
 
   public sendCloseMessage(targetOrigin: string): void {

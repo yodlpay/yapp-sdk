@@ -1,5 +1,3 @@
-import { FiatCurrency, FiatCurrencyString } from './currency';
-
 /**
  * Configuration options for the YappSDK
  *
@@ -17,27 +15,4 @@ export interface YappSDKConfig {
   apiUrl: string;
   /** URL of the mainnet RPC */
   mainnetRpcUrl: string;
-}
-
-/**
- * Payment request configuration
- *
- * @example
- * ```typescript
- * const payment: PaymentConfig = {
- *   amount: 99.99,
- *   currency: FiatCurrency.USD,
- *   memo: 'Premium subscription payment'
- * };
- * ```
- */
-export interface PaymentConfig {
-  /** The payment amount */
-  amount: number;
-  /** The currency code */
-  currency: FiatCurrency | FiatCurrencyString;
-  /** Optional payment memo/description */
-  memo?: string;
-  /** Payment redirect URL - Required when application runs outside of an iframe */
-  redirectUrl?: string;
 }

@@ -229,7 +229,8 @@ describe('MessageManager', () => {
         );
 
         await expect(
-          manager.sendPaymentRequest(TEST_CONSTANTS.ADDRESS, {
+          manager.sendPaymentRequest({
+            addressOrEns: TEST_CONSTANTS.ADDRESS,
             amount: 100,
             currency: FiatCurrency.USD,
             memo: 'too-long-memo',
@@ -241,7 +242,8 @@ describe('MessageManager', () => {
         const manager = new MessageManager(TEST_CONSTANTS);
 
         await expect(
-          manager.sendPaymentRequest(TEST_CONSTANTS.ADDRESS, {
+          manager.sendPaymentRequest({
+            addressOrEns: TEST_CONSTANTS.ADDRESS,
             amount: 100,
             currency: 'INVALID' as FiatCurrency,
           }),
@@ -252,7 +254,8 @@ describe('MessageManager', () => {
         const manager = new MessageManager(TEST_CONSTANTS);
 
         await expect(
-          manager.sendPaymentRequest(TEST_CONSTANTS.ADDRESS, {
+          manager.sendPaymentRequest({
+            addressOrEns: TEST_CONSTANTS.ADDRESS,
             amount: -100,
             currency: FiatCurrency.USD,
           }),
@@ -263,7 +266,8 @@ describe('MessageManager', () => {
         const manager = new MessageManager(TEST_CONSTANTS);
 
         await expect(
-          manager.sendPaymentRequest(TEST_CONSTANTS.ADDRESS, {
+          manager.sendPaymentRequest({
+            addressOrEns: TEST_CONSTANTS.ADDRESS,
             amount: 0,
             currency: FiatCurrency.USD,
           }),
@@ -275,7 +279,8 @@ describe('MessageManager', () => {
         (isInIframeModule.isInIframe as jest.Mock).mockReturnValue(false);
 
         await expect(
-          manager.sendPaymentRequest(TEST_CONSTANTS.ADDRESS, {
+          manager.sendPaymentRequest({
+            addressOrEns: TEST_CONSTANTS.ADDRESS,
             amount: 100,
             currency: FiatCurrency.USD,
           }),
@@ -315,14 +320,12 @@ describe('MessageManager', () => {
         });
 
         // Create a promise to resolve when the message event is triggered
-        const paymentPromise = manager.sendPaymentRequest(
-          TEST_CONSTANTS.ADDRESS,
-          {
-            amount: 100,
-            currency: FiatCurrency.USD,
-            memo: TEST_CONSTANTS.MEMO,
-          },
-        );
+        const paymentPromise = manager.sendPaymentRequest({
+          addressOrEns: TEST_CONSTANTS.ADDRESS,
+          amount: 100,
+          currency: FiatCurrency.USD,
+          memo: TEST_CONSTANTS.MEMO,
+        });
 
         // Verify the promise resolves with the expected data
         await expect(paymentPromise).resolves.toEqual({
@@ -353,13 +356,11 @@ describe('MessageManager', () => {
         });
 
         // Create a promise that should reject when cancelled
-        const paymentPromise = manager.sendPaymentRequest(
-          TEST_CONSTANTS.ADDRESS,
-          {
-            amount: 100,
-            currency: FiatCurrency.USD,
-          },
-        );
+        const paymentPromise = manager.sendPaymentRequest({
+          addressOrEns: TEST_CONSTANTS.ADDRESS,
+          amount: 100,
+          currency: FiatCurrency.USD,
+        });
 
         // Verify the promise rejects with the expected error
         await expect(paymentPromise).rejects.toThrow('Payment was cancelled');
@@ -384,13 +385,11 @@ describe('MessageManager', () => {
         });
 
         // Create a promise that should reject when timed out
-        const paymentPromise = manager.sendPaymentRequest(
-          TEST_CONSTANTS.ADDRESS,
-          {
-            amount: 100,
-            currency: FiatCurrency.USD,
-          },
-        );
+        const paymentPromise = manager.sendPaymentRequest({
+          addressOrEns: TEST_CONSTANTS.ADDRESS,
+          amount: 100,
+          currency: FiatCurrency.USD,
+        });
 
         // Verify the promise rejects with the expected error
         await expect(paymentPromise).rejects.toThrow(
@@ -436,15 +435,13 @@ describe('MessageManager', () => {
         });
 
         // Start the payment request
-        const paymentPromise = manager.sendPaymentRequest(
-          TEST_CONSTANTS.ADDRESS,
-          {
-            amount: 100,
-            currency: FiatCurrency.USD,
-            memo: TEST_CONSTANTS.MEMO,
-            redirectUrl: TEST_CONSTANTS.REDIRECT_URL,
-          },
-        );
+        const paymentPromise = manager.sendPaymentRequest({
+          addressOrEns: TEST_CONSTANTS.ADDRESS,
+          amount: 100,
+          currency: FiatCurrency.USD,
+          memo: TEST_CONSTANTS.MEMO,
+          redirectUrl: TEST_CONSTANTS.REDIRECT_URL,
+        });
 
         // Verify the promise resolves with the expected data
         await expect(paymentPromise).resolves.toEqual({
@@ -487,14 +484,12 @@ describe('MessageManager', () => {
         });
 
         // Start the payment request
-        const paymentPromise = manager.sendPaymentRequest(
-          TEST_CONSTANTS.ADDRESS,
-          {
-            amount: 100,
-            currency: FiatCurrency.USD,
-            redirectUrl: TEST_CONSTANTS.REDIRECT_URL,
-          },
-        );
+        const paymentPromise = manager.sendPaymentRequest({
+          addressOrEns: TEST_CONSTANTS.ADDRESS,
+          amount: 100,
+          currency: FiatCurrency.USD,
+          redirectUrl: TEST_CONSTANTS.REDIRECT_URL,
+        });
 
         // Verify the promise rejects with the expected error
         await expect(paymentPromise).rejects.toThrow('Payment was cancelled');
