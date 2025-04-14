@@ -99,7 +99,8 @@ async function requestPayment() {
       throw new Error('Amount must be a positive number');
     }
 
-    const paymentConfig = {
+    const paymentData = {
+      addressOrEns: address,
       amount,
       currency,
       memo: memo || undefined,
@@ -108,7 +109,7 @@ async function requestPayment() {
 
     log(`Requesting payment of ${amount} ${currency} to ${address}...`);
 
-    const response = await sdk.requestPayment(address, paymentConfig);
+    const response = await sdk.requestPayment(paymentData);
     log(
       `Payment successful! Transaction: ${response.txHash} on chain ${response.chainId}`,
       'success',
