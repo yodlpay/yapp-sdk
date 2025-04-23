@@ -48,6 +48,8 @@ export interface GetPaymentsQuery {
   senderEnsPrimaryName: string;
   receiverEnsPrimaryName: string;
 
+  memo: string; // case-insensitive, partial match
+
   page: number;
   // min 1, max 1000
   perPage: number;
