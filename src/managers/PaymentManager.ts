@@ -8,13 +8,12 @@ import {
 import {
   FiatCurrency,
   GetPaymentResponse,
-  GetPaymentsQuery,
   GetPaymentsResponse,
+  GetPaymentsQuery,
   Hex,
   MESSAGE_RESPONSE_TYPE,
   Payment,
   PaymentRequestData,
-  // PaymentStatus,
   RequestMessage,
   YappSDKConfig,
 } from '@types';
