@@ -7,12 +7,14 @@ import {
 } from '@constants';
 import {
   FiatCurrency,
+  GetPaymentResponse,
   GetPaymentsQuery,
+  GetPaymentsResponse,
   Hex,
   MESSAGE_RESPONSE_TYPE,
   Payment,
   PaymentRequestData,
-  PaymentStatus,
+  // PaymentStatus,
   RequestMessage,
   YappSDKConfig,
 } from '@types';
@@ -427,7 +429,7 @@ export class PaymentManager extends CommunicationManager {
     const response = await fetch(
       `${this.getApiUrl()}/api/v1/payments/${txHash}`,
     );
-    const payment = (await response.json()) as PaymentStatus;
+    const payment = (await response.json()) as GetPaymentResponse;
 
     if ('error' in payment && payment.error === 'NotFound') {
       return undefined;
@@ -458,7 +460,7 @@ export class PaymentManager extends CommunicationManager {
 
     const response = await fetch(url);
 
-    const payments = (await response.json()) as PaymentStatus[];
+    const payments = (await response.json()) as GetPaymentsResponse;
 
     return payments;
   }

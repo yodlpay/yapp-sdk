@@ -1,10 +1,6 @@
 import { Hex } from 'src';
 
-export type PaymentStatus =
-  | { payment: PaymentStatusBody }
-  | { error: 'NotFound' };
-
-export interface PaymentStatusBody {
+export interface PaymentSimple {
   chainId: number;
   txHash: Hex;
   paymentIndex: number;
@@ -23,6 +19,14 @@ export interface PaymentStatusBody {
   senderEnsPrimaryName: string;
   memo: string;
 }
+
+export type GetPaymentResponse =
+  | { payment: PaymentSimple }
+  | { error: 'NotFound' };
+
+export type GetPaymentsResponse =
+  | { payment: PaymentSimple[]; page: number; perPage: number; total: number }
+  | { error: 'NotFound' };
 
 export interface ReceiverYodlConfig {
   og: Og;
