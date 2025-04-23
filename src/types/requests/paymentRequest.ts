@@ -25,7 +25,7 @@ export type GetPaymentResponse =
   | { error: 'NotFound' };
 
 export type GetPaymentsResponse =
-  | { payment: PaymentSimple[]; page: number; perPage: number; total: number }
+  | { payments: PaymentSimple[]; page: number; perPage: number; total: number }
   | { error: 'NotFound' };
 
 export interface ReceiverYodlConfig {
