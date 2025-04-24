@@ -1,6 +1,6 @@
 {
   "name": "@yodlpay/yapp-sdk",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "SDK for building Yodl Yapps",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
