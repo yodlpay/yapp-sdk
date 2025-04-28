@@ -187,6 +187,19 @@ The payment flow handles both iframe and redirect modes automatically based on t
 - `memo`: Optional identifier/description (max 32 bytes)
 - `redirectUrl`: Required when not in iframe mode
 
+#### Payment Response Structure
+
+The `requestPayment` method returns a Promise that resolves to a `Payment` object with the following structure:
+
+```typescript
+interface Payment {
+  txHash: string; // Transaction hash (Hex string)
+  chainId: number; // Chain ID where transaction was executed
+}
+```
+
+This basic response provides essential information to track the payment on-chain. To get more detailed information, use the `getPayment` method. [See Fetching Payment Details](#-fetching-payment-details).
+
 #### Payment Modes
 
 The SDK operates in two different modes depending on the environment:
@@ -252,25 +265,25 @@ const examples = [
 
 ### 🔍 Fetching Payment Details
 
-Once you have the transaction hash from a successful payment, you can fetch the complete payment details using the Yodl API:
+Fetch payment details of a single or multiple payments from the Yodl indexer API.
+
+#### Fetching a single payment
+
+Fetch a single payment by passing the transaction hash to the `getPayment` method.
 
 ```typescript
-// Example of fetching payment details with the transaction hash
-const fetchPaymentDetails = async (txHash) => {
-  try {
-    const response = await fetch(
-      `https://tx.yodl.me/api/v1/payments/${txHash}`,
-    );
-    const data = await response.json();
-    return data.payment;
-  } catch (error) {
-    console.error('Error fetching payment details:', error);
-    throw error;
-  }
-};
+const payment = await sdk.getPayment(txHash);
 ```
 
-The API response includes comprehensive payment information:
+#### Fetching multiple payments
+
+Fetch multiple payments by passing a config object with filtering options to the `getPayments` method.
+
+```typescript
+const payments = await sdk.getPayments(config);
+```
+
+Payment objects are of type `PaymentSimple` and has the following structure:
 
 ```json
 {
@@ -293,19 +306,6 @@ The API response includes comprehensive payment information:
   }
 }
 ```
-
-#### Payment Response Structure
-
-The `requestPayment` method returns a Promise that resolves to a `Payment` object with the following structure:
-
-```typescript
-interface Payment {
-  txHash: string; // Transaction hash (Hex string)
-  chainId: number; // Chain ID where transaction was executed
-}
-```
-
-This basic response provides essential information to track the payment on-chain. To get more detailed information, you'll need to use the Yodl API as shown above.
 
 #### ENS Name Resolution
 
@@ -409,6 +409,70 @@ This detailed information can be used for:
 - Recording sender and receiver information
 - Tracking payment timestamps
 - Implementing receipt generation
+
+### 🔐 Sign-In with Ethereum (SIWE)
+
+The SDK provides a secure way to request SIWE (Sign-In with Ethereum) message signatures from users through the parent app:
+
+```typescript
+try {
+  const response = await sdk.signSiweMessage({
+    domain: 'example.com',
+    uri: 'https://example.com/login',
+    version: '1',
+    chainId: 1,
+    nonce: 'random-nonce-123',
+    issuedAt: new Date().toISOString(),
+    statement: 'Sign in with Ethereum to the app.',
+  });
+
+  console.log('Signature:', response.signature);
+  console.log('Address:', response.address);
+} catch (error) {
+  if (error.message === 'Signature request was cancelled') {
+    console.log('User cancelled the signing request');
+  } else if (error.message === 'Signature request timed out') {
+    console.log('Signature request timed out after 5 minutes');
+  } else {
+    console.error('Signing failed:', error.message);
+  }
+}
+```
+
+#### SIWE Request Data
+
+The `signSiweMessage` method accepts a `SiweRequestData` object with the following structure:
+
+```typescript
+interface SiweRequestData {
+  domain: string; // The domain requesting the signature
+  uri: string; // The URI where the signature will be used
+  version: string; // The SIWE version (typically '1')
+  chainId: number; // The chain ID where the signature will be valid
+  nonce: string; // A unique nonce to prevent replay attacks
+  issuedAt: string; // ISO timestamp of when the message was issued
+  statement?: string; // Optional statement to be signed
+}
+```
+
+#### SIWE Response Data
+
+The method returns a Promise that resolves to a `SiweResponseData` object:
+
+```typescript
+interface SiweResponseData {
+  signature: string; // The EIP-191 signature of the SIWE message
+  address: string; // The address that signed the message
+}
+```
+
+#### Error Handling
+
+The signature request might throw errors in several scenarios:
+
+- `Signature request was cancelled`: User cancelled the signature request
+- `Signature request timed out`: Request took too long (default timeout: 5 minutes)
+- `SIWE signing is only supported in iframe mode`: Attempted to use SIWE outside of iframe context
 
 ### 🖼️ Iframe Integration
 
