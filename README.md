@@ -187,6 +187,19 @@ The payment flow handles both iframe and redirect modes automatically based on t
 - `memo`: Optional identifier/description (max 32 bytes)
 - `redirectUrl`: Required when not in iframe mode
 
+#### Payment Response Structure
+
+The `requestPayment` method returns a Promise that resolves to a `Payment` object with the following structure:
+
+```typescript
+interface Payment {
+  txHash: string; // Transaction hash (Hex string)
+  chainId: number; // Chain ID where transaction was executed
+}
+```
+
+This basic response provides essential information to track the payment on-chain. To get more detailed information, use the `getPayment` method. [See Fetching Payment Details](#-fetching-payment-details).
+
 #### Payment Modes
 
 The SDK operates in two different modes depending on the environment:
@@ -252,25 +265,25 @@ const examples = [
 
 ### 🔍 Fetching Payment Details
 
-Once you have the transaction hash from a successful payment, you can fetch the complete payment details using the Yodl API:
+The SDK exposes functions to fetch payment details of a single or multiple payments from the Yodl indexer API.
+
+#### Fetching a single payment
+
+Fetch a single payment by passing the transaction hash to the `getPayment` method.
 
 ```typescript
-// Example of fetching payment details with the transaction hash
-const fetchPaymentDetails = async (txHash) => {
-  try {
-    const response = await fetch(
-      `https://tx.yodl.me/api/v1/payments/${txHash}`,
-    );
-    const data = await response.json();
-    return data.payment;
-  } catch (error) {
-    console.error('Error fetching payment details:', error);
-    throw error;
-  }
-};
+const payment = await sdk.getPayment(txHash);
 ```
 
-The API response includes comprehensive payment information:
+#### Fetching multiple payments
+
+Fetch multiple payments by passing a config object with filtering options to the `getPayments` method.
+
+```typescript
+const payments = await sdk.getPayments(config);
+```
+
+Payment objects are of type `PaymentSimple` and has the following structure:
 
 ```json
 {
@@ -293,19 +306,6 @@ The API response includes comprehensive payment information:
   }
 }
 ```
-
-#### Payment Response Structure
-
-The `requestPayment` method returns a Promise that resolves to a `Payment` object with the following structure:
-
-```typescript
-interface Payment {
-  txHash: string; // Transaction hash (Hex string)
-  chainId: number; // Chain ID where transaction was executed
-}
-```
-
-This basic response provides essential information to track the payment on-chain. To get more detailed information, you'll need to use the Yodl API as shown above.
 
 #### ENS Name Resolution
 
