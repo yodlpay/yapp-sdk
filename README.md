@@ -265,7 +265,7 @@ const examples = [
 
 ### 🔍 Fetching Payment Details
 
-The SDK exposes functions to fetch payment details of a single or multiple payments from the Yodl indexer API.
+Fetch payment details of a single or multiple payments from the Yodl indexer API.
 
 #### Fetching a single payment
 
