@@ -410,6 +410,70 @@ This detailed information can be used for:
 - Tracking payment timestamps
 - Implementing receipt generation
 
+### 🔐 Sign-In with Ethereum (SIWE)
+
+The SDK provides a secure way to request SIWE (Sign-In with Ethereum) message signatures from users through the parent app:
+
+```typescript
+try {
+  const response = await sdk.signSiweMessage({
+    domain: 'example.com',
+    uri: 'https://example.com/login',
+    version: '1',
+    chainId: 1,
+    nonce: 'random-nonce-123',
+    issuedAt: new Date().toISOString(),
+    statement: 'Sign in with Ethereum to the app.',
+  });
+
+  console.log('Signature:', response.signature);
+  console.log('Address:', response.address);
+} catch (error) {
+  if (error.message === 'Signature request was cancelled') {
+    console.log('User cancelled the signing request');
+  } else if (error.message === 'Signature request timed out') {
+    console.log('Signature request timed out after 5 minutes');
+  } else {
+    console.error('Signing failed:', error.message);
+  }
+}
+```
+
+#### SIWE Request Data
+
+The `signSiweMessage` method accepts a `SiweRequestData` object with the following structure:
+
+```typescript
+interface SiweRequestData {
+  domain: string; // The domain requesting the signature
+  uri: string; // The URI where the signature will be used
+  version: string; // The SIWE version (typically '1')
+  chainId: number; // The chain ID where the signature will be valid
+  nonce: string; // A unique nonce to prevent replay attacks
+  issuedAt: string; // ISO timestamp of when the message was issued
+  statement?: string; // Optional statement to be signed
+}
+```
+
+#### SIWE Response Data
+
+The method returns a Promise that resolves to a `SiweResponseData` object:
+
+```typescript
+interface SiweResponseData {
+  signature: string; // The EIP-191 signature of the SIWE message
+  address: string; // The address that signed the message
+}
+```
+
+#### Error Handling
+
+The signature request might throw errors in several scenarios:
+
+- `Signature request was cancelled`: User cancelled the signature request
+- `Signature request timed out`: Request took too long (default timeout: 5 minutes)
+- `SIWE signing is only supported in iframe mode`: Attempted to use SIWE outside of iframe context
+
 ### 🖼️ Iframe Integration
 
 #### Detection
