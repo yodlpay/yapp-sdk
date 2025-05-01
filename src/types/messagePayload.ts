@@ -70,15 +70,19 @@ export interface SiweResponseData {
  *   currency: FiatCurrency.USD,
  *   memo: 'Premium subscription payment'
  * };
+ *
+ * const paymentWithoutAmount: PaymentConfig = {
+ *   addressOrEns: '0x1234567890123456789012345678901234567890',
+ * };
  * ```
  */
 export interface PaymentRequestData {
   /** The recipient's blockchain address or ENS name */
   addressOrEns: string | Hex;
-  /** The payment amount */
-  amount: number;
-  /** The currency code */
-  currency: FiatCurrency | FiatCurrencyString;
+  /** The payment amount. If not provided, the user can enter any amount they choose */
+  amount?: number;
+  /** The currency code. If not provided, the user can choose any currency they want. */
+  currency?: FiatCurrency | FiatCurrencyString;
   /** Optional payment memo/description */
   memo?: string;
   /** Payment redirect URL - Required when application runs outside of an iframe */
