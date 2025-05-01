@@ -16,7 +16,7 @@ module.exports = {
             transpileOnly: true,
           },
         },
-        exclude: /node_modules/,
+        exclude: /node_modules\/(?!@justaname\.id\/sdk)/,
       },
     ],
   },
