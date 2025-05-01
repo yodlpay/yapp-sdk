@@ -1,19 +1,28 @@
 {
   "name": "@yodlpay/yapp-sdk",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "description": "SDK for building Yodl Yapps",
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
+      "require": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./types": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.js",
+      "require": "./dist/types/index.js",
       "default": "./dist/types/index.js"
+    },
+    "./umd": {
+      "import": "./dist/yapp-sdk.js",
+      "require": "./dist/yapp-sdk.js",
+      "default": "./dist/yapp-sdk.js"
     }
   },
   "typesVersions": {
@@ -53,6 +62,7 @@
   "author": "Yodl",
   "license": "MIT",
   "devDependencies": {
+    "@justaname.id/sdk": "^0.2.181",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.1",
     "buffer": "^6.0.3",
@@ -71,7 +81,6 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@justaname.id/sdk": "^0.2.181",
     "jose": "5.x"
   }
 }
