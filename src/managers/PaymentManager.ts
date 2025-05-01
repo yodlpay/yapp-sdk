@@ -82,7 +82,10 @@ export class PaymentManager extends CommunicationManager {
       }
 
       // Validate amount
-      if (paymentData.amount && (typeof paymentData.amount !== 'number' || paymentData.amount <= 0)) {
+      if (
+        paymentData.amount &&
+        (typeof paymentData.amount !== 'number' || paymentData.amount <= 0)
+      ) {
         reject(new Error('Amount must be a positive number'));
         return;
       }
