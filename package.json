@@ -1,6 +1,6 @@
 {
   "name": "@yodlpay/yapp-sdk",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "description": "SDK for building Yodl Yapps",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -62,7 +62,6 @@
   "author": "Yodl",
   "license": "MIT",
   "devDependencies": {
-    "@justaname.id/sdk": "^0.2.181",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.1",
     "buffer": "^6.0.3",
@@ -81,6 +80,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "@justaname.id/sdk": "^0.2.181",
     "jose": "5.x"
   }
 }
