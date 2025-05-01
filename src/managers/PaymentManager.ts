@@ -8,8 +8,8 @@ import {
 import {
   FiatCurrency,
   GetPaymentResponse,
-  GetPaymentsResponse,
   GetPaymentsQuery,
+  GetPaymentsResponse,
   Hex,
   MESSAGE_RESPONSE_TYPE,
   Payment,
@@ -72,7 +72,7 @@ export class PaymentManager extends CommunicationManager {
       }
 
       // Validate currency
-      if (!isValidFiatCurrency(paymentData.currency)) {
+      if (paymentData.currency && !isValidFiatCurrency(paymentData.currency)) {
         reject(
           new Error(
             `Invalid currency "${paymentData.currency}". Must be one of: ${Object.values(FiatCurrency).join(', ')}`,
@@ -82,7 +82,7 @@ export class PaymentManager extends CommunicationManager {
       }
 
       // Validate amount
-      if (typeof paymentData.amount !== 'number' || paymentData.amount <= 0) {
+      if (paymentData.amount && (typeof paymentData.amount !== 'number' || paymentData.amount <= 0)) {
         reject(new Error('Amount must be a positive number'));
         return;
       }
@@ -290,14 +290,20 @@ export class PaymentManager extends CommunicationManager {
       encodeURIComponent(redirectUrl),
     );
     paymentUrl.searchParams.set(URL_PARAMS_REQUEST.MEMO, memo);
-    paymentUrl.searchParams.set(
-      URL_PARAMS_REQUEST.AMOUNT,
-      message.payload.amount.toString(),
-    );
-    paymentUrl.searchParams.set(
-      URL_PARAMS_REQUEST.CURRENCY,
-      message.payload.currency,
-    );
+
+    if (message.payload.amount) {
+      paymentUrl.searchParams.set(
+        URL_PARAMS_REQUEST.AMOUNT,
+        message.payload.amount.toString(),
+      );
+    }
+
+    if (message.payload.currency) {
+      paymentUrl.searchParams.set(
+        URL_PARAMS_REQUEST.CURRENCY,
+        message.payload.currency,
+      );
+    }
 
     // Navigate to the payment URL
     window.location.href = paymentUrl.toString();
