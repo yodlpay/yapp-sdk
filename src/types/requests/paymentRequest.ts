@@ -48,11 +48,13 @@ export interface GetPaymentsQuery {
   senderEnsPrimaryName: string;
   receiverEnsPrimaryName: string;
 
+  tokenOutSymbols: string; // comma separated list of token symbols
+  sourceChainIds: string; // comma separated list of chain ids
+
   memo: string; // case-insensitive, partial match
 
   page: number;
-  // min 1, max 1000
-  perPage: number;
+  perPage: number; // min 1, max 1000
 
   sortBy: 'blockTimestamp' | 'amountUSD';
   sortDir: 'asc' | 'desc';
