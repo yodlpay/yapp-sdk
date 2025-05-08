@@ -5,7 +5,7 @@ The official SDK for building Yodl Yapps. This SDK provides a secure way to inte
 ## 📦 Installation
 
 ```bash
-npm install @yodlpay/yapp-sdk @justaname.id/sdk
+npm install @yodlpay/yapp-sdk
 ```
 
 ## ⚡ Quick Start
