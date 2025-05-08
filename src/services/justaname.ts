@@ -4,11 +4,7 @@
  * This file handles API calls to the justaname.id service.
  */
 
-import {
-  Hex,
-  JustaNameConfig,
-  JustaNameSubnameResponse
-} from '@types';
+import { Hex, JustaNameConfig, JustaNameSubnameResponse } from '@types';
 
 const API_BASE_URL_EFP = 'https://api.justaname.id/ens/v1';
 
@@ -18,20 +14,16 @@ const API_BASE_URL_EFP = 'https://api.justaname.id/ens/v1';
  * @param options - The query options to append
  * @returns The URL with query parameters
  */
-function constructUrlWithParams(
-  endpoint: string,
-): string {
+function constructUrlWithParams(endpoint: string): string {
   return `${API_BASE_URL_EFP}${endpoint}`;
 }
 
-  /**
-   * Fetches subname data for a specific ETH name
-   * @param ens - The ETH name to fetch subname data for
-   * @returns The API response with subname data
-   */
-export async function fetchSubname(
-  ens: string,
-): Promise<JustaNameConfig> {
+/**
+ * Fetches subname data for a specific ETH name
+ * @param ens - The ETH name to fetch subname data for
+ * @returns The API response with subname data
+ */
+export async function fetchSubname(ens: string): Promise<JustaNameConfig> {
   const endpoint = `/subname/subname?subname=${ens}&chainId=1`;
   const url = constructUrlWithParams(endpoint);
 
@@ -44,18 +36,20 @@ export async function fetchSubname(
       );
     }
 
+    const {
+      result: { data },
+    } = (await response.json()) as JustaNameSubnameResponse;
 
-    const {result: {data}} = await response.json() as JustaNameSubnameResponse;
-
-    const ethAddress = data.records.coins.find((coin) => coin.name === 'eth')?.value;
+    const ethAddress = data.records.coins.find(
+      (coin) => coin.name === 'eth',
+    )?.value;
 
     return {
       ...data,
       address: ethAddress as Hex,
-    }
+    };
   } catch (error) {
     console.error('[JustaName] Error fetching subname:', error);
     throw error;
   }
 }
-
