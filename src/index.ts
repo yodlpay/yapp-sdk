@@ -1,8 +1,8 @@
 import {
   CommunicationManager,
-  SiweManager,
   CommunityManager,
   PaymentManager,
+  SiweManager,
 } from '@managers';
 import {
   GetPaymentsQuery,
@@ -98,7 +98,7 @@ class YappSDK {
 
     this.communicationManager = new CommunicationManager(finalConfig);
     this.paymentManager = new PaymentManager(finalConfig);
-    this.communityManager = new CommunityManager(finalConfig);
+    this.communityManager = new CommunityManager();
     this.siweManager = new SiweManager(finalConfig);
   }
 
