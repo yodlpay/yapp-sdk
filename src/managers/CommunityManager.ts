@@ -1,24 +1,14 @@
-import { JustaName } from '@justaname.id/sdk';
-import { fetchFollowers, fetchFollowing } from '@services';
-import { CommunityConfiguration, YappSDKConfig } from '@types';
-import { justaname } from '@utils';
+import { fetchFollowers, fetchFollowing, fetchSubname } from '@services';
+import { CommunityConfiguration } from '@types';
 
 export class CommunityManager {
-  private justaname: JustaName;
-
-  constructor(config: YappSDKConfig) {
-    this.justaname = justaname(config.mainnetRpcUrl);
-  }
-
   /**
    * Fetches the community information including ENS records and configuration
    * @param ens - The ENS name of the community
    * @returns The community records and parsed configuration data
    */
   public async getCommunityConfiguration(ens: string) {
-    const community = await this.justaname.subnames.getRecords({
-      ens,
-    });
+    const community = await fetchSubname(ens);
 
     if (!community.ens) {
       throw new Error(`[CommunityManager] Community not found: ${ens}`);
