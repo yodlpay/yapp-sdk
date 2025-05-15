@@ -3,6 +3,7 @@ import {
   CommunityManager,
   PaymentManager,
   SiweManager,
+  CookieManager,
 } from '@managers';
 import {
   GetPaymentsQuery,
@@ -13,6 +14,8 @@ import {
   SiweResponseData,
   UserContext,
   YappSDKConfig,
+  SaveCookiesRequestData,
+  GetCookiesRequestData,
 } from '@types';
 import { getSafeWindow } from '@utils/safeWindow';
 
@@ -82,6 +85,9 @@ class YappSDK {
   /** Instance of CommunityManager handling community operations */
   private communityManager!: CommunityManager;
 
+  /** Instance of */
+  private cookieManager!: CookieManager;
+
   /**
    * Creates a new instance of YappSDK.
    *
@@ -100,6 +106,7 @@ class YappSDK {
     this.paymentManager = new PaymentManager(finalConfig);
     this.communityManager = new CommunityManager();
     this.siweManager = new SiweManager(finalConfig);
+    this.cookieManager = new CookieManager(finalConfig);
   }
 
   /**
@@ -111,7 +118,8 @@ class YappSDK {
     if (
       !this.communicationManager ||
       !this.paymentManager ||
-      !this.siweManager
+      !this.siweManager ||
+      !this.cookieManager
     ) {
       throw new Error(
         'SDK not initialized. Please wait for initialization to complete.',
@@ -325,6 +333,60 @@ class YappSDK {
    */
   public async getCommunityMembers(memberProvider: string) {
     return await this.communityManager.getCommunityMembers(memberProvider);
+  }
+
+  /**
+   * Saves cookies in the super app's localStorage.
+   * This allows yapps to store data that persists across sessions.
+   * The cookies are stored with the yapp's host as the key.
+   *
+   * @param cookies - The cookies to save, as a record of key-value pairs
+   * @returns Promise that resolves with the saved cookies
+   * @throws {Error} If the request is not made from an iframe, times out, or encounters other errors
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const response = await sdk.saveCookies({
+   *     theme: 'dark',
+   *     lastVisit: new Date().toISOString()
+   *   });
+   *   console.log('Cookies saved successfully:', response);
+   * } catch (error) {
+   *   console.error('Failed to save cookies:', error);
+   * }
+   * ```
+   */
+  public async saveCookies(cookies: SaveCookiesRequestData) {
+    return await this.cookieManager.saveCookies(cookies);
+  }
+
+  /**
+   * Retrieves cookies from the super app's localStorage.
+   * This allows yapps to access their previously stored data.
+   * The cookies are retrieved using the yapp's host as the key.
+   *
+   * @param keys - Optional array of cookie keys to retrieve. If not provided, all cookies are returned.
+   * @returns Promise that resolves with the requested cookies
+   * @throws {Error} If the request is not made from an iframe, times out, or encounters other errors
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   // Get all cookies
+   *   const allCookies = await sdk.getCookies();
+   *   console.log('All cookies:', allCookies);
+   *
+   *   // Get specific cookies
+   *   const specificCookies = await sdk.getCookies(['theme', 'lastVisit']);
+   *   console.log('Specific cookies:', specificCookies);
+   * } catch (error) {
+   *   console.error('Failed to retrieve cookies:', error);
+   * }
+   * ```
+   */
+  public async getCookies(keys?: GetCookiesRequestData) {
+    return await this.cookieManager.getCookies(keys);
   }
 }
 

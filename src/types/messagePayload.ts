@@ -88,3 +88,31 @@ export interface PaymentRequestData {
   /** Payment redirect URL - Required when application runs outside of an iframe */
   redirectUrl?: string;
 }
+
+/**
+ * Save cookies request payload
+ *
+ * Record of keys and values to save in the super app's localStorage, where values can be of any type.
+ */
+export type SaveCookiesRequestData = Record<string, any>;
+
+/**
+ * Save cookies response payload
+ */
+export type SaveCookiesResponseData = {
+  cookies: Record<string, any>;
+};
+
+/**
+ * Get cookies request payload
+ *
+ * Optional array of keys to retrieve from the super app's localStorage. If not provided, all cookies are returned.
+ */
+export type GetCookiesRequestData = string[] | undefined;
+
+/**
+ * Get cookies response payload
+ */
+export type GetCookiesResponseData = {
+  cookies: Record<string, any>;
+};

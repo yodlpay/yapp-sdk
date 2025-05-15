@@ -1,6 +1,10 @@
 import {
   Payment,
   PaymentRequestData,
+  SaveCookiesRequestData,
+  SaveCookiesResponseData,
+  GetCookiesRequestData,
+  GetCookiesResponseData,
   SiweRequestData,
   SiweResponseData,
   UserContext,
@@ -12,6 +16,9 @@ const MESSAGE_RESPONSE_PAYLOADS = {
   USER_CONTEXT_RESPONSE: {} as UserContext,
   ENS_NOT_FOUND: undefined, // When user request payment for an ENS name that is not found
   SIWE_RESPONSE: {} as SiweResponseData, // Response from SIWE message signing
+
+  SAVE_COOKIES_RESPONSE: {} as SaveCookiesResponseData,
+  GET_COOKIES_RESPONSE: {} as GetCookiesResponseData,
 } as const;
 
 const MESSAGE_REQUEST_PAYLOADS = {
@@ -19,6 +26,9 @@ const MESSAGE_REQUEST_PAYLOADS = {
   USER_CONTEXT_REQUEST: undefined,
   CLOSE: undefined,
   SIWE_REQUEST: {} as SiweRequestData, // Request to sign a SIWE message
+
+  SAVE_COOKIES_REQUEST: {} as SaveCookiesRequestData,
+  GET_COOKIES_REQUEST: {} as GetCookiesRequestData,
 } as const;
 
 export const MESSAGE_RESPONSE_TYPE = Object.keys(
