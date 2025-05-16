@@ -5,6 +5,7 @@ import {
   GetCookiesRequestData,
   GetCookiesResponseData,
   YappSDKConfig,
+  Cookie,
 } from '@types';
 import { createRequestMessage, isInIframe } from '@utils';
 import { CommunicationManager } from './CommunicationManager';
@@ -19,6 +20,7 @@ import { CommunicationManager } from './CommunicationManager';
 export class CookieManager extends CommunicationManager {
   private readonly IFRAME_REQUIRED_ERROR =
     'Access to Yapp Cookiestore is only supported in iframe mode';
+  private readonly DEFAULT_EXPIRY = 1000 * 60 * 60 * 24 * 7; // 7 days
 
   /**
    * Creates a new PaymentManager instance.
@@ -32,7 +34,7 @@ export class CookieManager extends CommunicationManager {
   /**
    * Saves cookies in the super app localStorage.
    *
-   * @param cookies - The cookies to save, as a record of key-value pairs
+   * @param cookies - The cookies to save
    * @returns Promise that resolves with the saved cookies
    * @throws (Error) If the cookie persistence request times out or an unknown error occurs
    */
@@ -40,8 +42,20 @@ export class CookieManager extends CommunicationManager {
     cookies: SaveCookiesRequestData,
   ): Promise<SaveCookiesResponseData> {
     return new Promise((resolve, reject) => {
+      // Added expiry if not provided. Defaults to 7 days
+      const cookiesWithExpiry: Cookie[] = cookies.map((cookie) => ({
+        key: cookie.key,
+        data: {
+          ...cookie.data,
+          exp: cookie.data.exp || Date.now() + this.DEFAULT_EXPIRY,
+        },
+      }));
+
       // Create the message
-      const message = createRequestMessage('SAVE_COOKIES_REQUEST', cookies);
+      const message = createRequestMessage(
+        'SAVE_COOKIES_REQUEST',
+        cookiesWithExpiry,
+      );
 
       // Check if running in iframe
       if (!isInIframe()) {
@@ -94,7 +108,7 @@ export class CookieManager extends CommunicationManager {
   /**
    * Gets cookies from the super app localStorage.
    *
-   * @param keys  - Optional array of cookie keys to retrieve. If not provided, all cookies are returned.
+   * @param keys - Optional array of cookie keys to retrieve
    * @returns Promise that resolves with the requested cookies
    * @throws (Error) If the cookie retrieval request times out or an unknown error occurs
    */

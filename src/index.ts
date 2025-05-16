@@ -340,17 +340,28 @@ class YappSDK {
    * This allows yapps to store data that persists across sessions.
    * The cookies are stored with the yapp's host as the key.
    *
-   * @param cookies - The cookies to save, as a record of key-value pairs
+   * @param cookies - Array of cookies to save, where each cookie has a key and data object
    * @returns Promise that resolves with the saved cookies
    * @throws {Error} If the request is not made from an iframe, times out, or encounters other errors
    *
    * @example
    * ```typescript
    * try {
-   *   const response = await sdk.saveCookies({
-   *     theme: 'dark',
-   *     lastVisit: new Date().toISOString()
-   *   });
+   *   const response = await sdk.saveCookies([
+   *     {
+   *       key: 'theme',
+   *       data: {
+   *         value: 'dark',
+   *         exp: Date.now() + 1000 * 60 * 60 * 24 * 7 // 7 days
+   *       }
+   *     },
+   *     {
+   *       key: 'lastVisit',
+   *       data: {
+   *         value: new Date().toISOString()
+   *       }
+   *     }
+   *   ]);
    *   console.log('Cookies saved successfully:', response);
    * } catch (error) {
    *   console.error('Failed to save cookies:', error);
@@ -366,7 +377,7 @@ class YappSDK {
    * This allows yapps to access their previously stored data.
    * The cookies are retrieved using the yapp's host as the key.
    *
-   * @param keys - Optional array of cookie keys to retrieve. If not provided, all cookies are returned.
+   * @param keys - Optional array of cookie keys to retrieve. If not provided, all cookies are returned
    * @returns Promise that resolves with the requested cookies
    * @throws {Error} If the request is not made from an iframe, times out, or encounters other errors
    *

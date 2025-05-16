@@ -90,29 +90,41 @@ export interface PaymentRequestData {
 }
 
 /**
+ * Cookie type with expiration and additional properties
+ */
+export type Cookie = {
+  key: string;
+  data: {
+    exp?: number;
+    [key: string]: any;
+  };
+};
+
+/**
  * Save cookies request payload
  *
- * Record of keys and values to save in the super app's localStorage, where values can be of any type.
+ * Array of cookies to save in the super app's localStorage.
  */
-export type SaveCookiesRequestData = Record<string, any>;
+export type SaveCookiesRequestData = Cookie[];
 
 /**
  * Save cookies response payload
+ *
+ * Contains the array of cookies that were successfully saved.
  */
-export type SaveCookiesResponseData = {
-  cookies: Record<string, any>;
-};
+export type SaveCookiesResponseData = { cookies: Cookie[] };
 
 /**
  * Get cookies request payload
  *
- * Optional array of keys to retrieve from the super app's localStorage. If not provided, all cookies are returned.
+ * Optional array of cookie keys to retrieve from the super app's localStorage.
+ * If not provided, all cookies are returned.
  */
 export type GetCookiesRequestData = string[] | undefined;
 
 /**
  * Get cookies response payload
+ *
+ * Contains the array of cookies that were retrieved.
  */
-export type GetCookiesResponseData = {
-  cookies: Record<string, any>;
-};
+export type GetCookiesResponseData = { cookies: Cookie[] };
