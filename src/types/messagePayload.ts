@@ -88,3 +88,49 @@ export interface PaymentRequestData {
   /** Payment redirect URL - Required when application runs outside of an iframe */
   redirectUrl?: string;
 }
+
+/**
+ * Cookie type with expiration and additional properties
+ */
+export type Cookie = {
+  key: string;
+  data: {
+    exp: number;
+    [key: string]: any;
+  };
+};
+
+export type CookieWithOptionalExp = Omit<Cookie, 'data'> & {
+  data: Omit<Cookie['data'], 'exp'> & {
+    exp?: number;
+  };
+};
+
+/**
+ * Save cookies request payload
+ *
+ * Array of cookies to save in the super app's localStorage.
+ */
+export type SaveCookiesRequestData = Cookie[];
+
+/**
+ * Save cookies response payload
+ *
+ * Contains the array of cookies that were successfully saved.
+ */
+export type SaveCookiesResponseData = { cookies: Cookie[] };
+
+/**
+ * Get cookies request payload
+ *
+ * Optional array of cookie keys to retrieve from the super app's localStorage.
+ * If not provided, all cookies are returned.
+ */
+export type GetCookiesRequestData = string[] | undefined;
+
+/**
+ * Get cookies response payload
+ *
+ * Contains the array of cookies that were retrieved.
+ */
+export type GetCookiesResponseData = { cookies: Cookie[] };
