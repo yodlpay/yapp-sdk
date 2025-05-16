@@ -95,8 +95,14 @@ export interface PaymentRequestData {
 export type Cookie = {
   key: string;
   data: {
-    exp?: number;
+    exp: number;
     [key: string]: any;
+  };
+};
+
+export type CookieWithOptionalExp = Omit<Cookie, 'data'> & {
+  data: Omit<Cookie['data'], 'exp'> & {
+    exp?: number;
   };
 };
 

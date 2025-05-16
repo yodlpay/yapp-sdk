@@ -16,6 +16,7 @@ import {
   YappSDKConfig,
   SaveCookiesRequestData,
   GetCookiesRequestData,
+  CookieWithOptionalExp,
 } from '@types';
 import { getSafeWindow } from '@utils/safeWindow';
 
@@ -368,7 +369,7 @@ class YappSDK {
    * }
    * ```
    */
-  public async saveCookies(cookies: SaveCookiesRequestData) {
+  public async saveCookies(cookies: CookieWithOptionalExp[]) {
     return await this.cookieManager.saveCookies(cookies);
   }
 

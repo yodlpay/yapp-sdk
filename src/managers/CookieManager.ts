@@ -6,6 +6,7 @@ import {
   GetCookiesResponseData,
   YappSDKConfig,
   Cookie,
+  CookieWithOptionalExp,
 } from '@types';
 import { createRequestMessage, isInIframe } from '@utils';
 import { CommunicationManager } from './CommunicationManager';
@@ -39,7 +40,7 @@ export class CookieManager extends CommunicationManager {
    * @throws (Error) If the cookie persistence request times out or an unknown error occurs
    */
   public async saveCookies(
-    cookies: SaveCookiesRequestData,
+    cookies: CookieWithOptionalExp[],
   ): Promise<SaveCookiesResponseData> {
     return new Promise((resolve, reject) => {
       // Added expiry if not provided. Defaults to 7 days
