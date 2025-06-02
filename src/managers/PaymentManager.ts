@@ -1,4 +1,5 @@
 import {
+  ALLOWED_CHAIN_IDS,
   PAYMENT_TIMEOUT_MS,
   STORAGE_KEY,
   TEST_TIMEOUT_MS,
@@ -21,6 +22,7 @@ import {
   createRequestMessage,
   createValidMemoFromUUID,
   isInIframe,
+  isValidChainId,
   isValidFiatCurrency,
   isValidMemoSize,
 } from '@utils';
@@ -76,6 +78,18 @@ export class PaymentManager extends CommunicationManager {
         reject(
           new Error(
             `Invalid currency "${paymentData.currency}". Must be one of: ${Object.values(FiatCurrency).join(', ')}`,
+          ),
+        );
+        return;
+      }
+
+      // Validate chainIds
+      if (paymentData.chainIds && !paymentData.chainIds.every(isValidChainId)) {
+        reject(
+          new Error(
+            `Invalid chainIds "${paymentData.chainIds}". Must be one of: ${ALLOWED_CHAIN_IDS.join(
+              ', ',
+            )}`,
           ),
         );
         return;
