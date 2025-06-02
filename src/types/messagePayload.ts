@@ -1,3 +1,4 @@
+import { ChainId } from './chains';
 import { FiatCurrency, FiatCurrencyString } from './currency';
 import { Hex } from './utils';
 
@@ -87,4 +88,8 @@ export interface PaymentRequestData {
   memo?: string;
   /** Payment redirect URL - Required when application runs outside of an iframe */
   redirectUrl?: string;
+  /** Array of token symbols that can be used for payment. If not provided, the receiver's Yodl configuration will be used */
+  tokens?: string[];
+  /** Array of chain IDs that can be used for payment. If not provided, the recievers yodl config will be used */
+  chainIds?: ChainId[];
 }
