@@ -1,4 +1,5 @@
 // export * from './messages';
+export * from './chains';
 export * from './config';
 export * from './currency';
 export * from './messagePayload';
