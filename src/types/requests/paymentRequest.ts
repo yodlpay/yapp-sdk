@@ -10,6 +10,9 @@ export interface PaymentSimple {
   tokenOutSymbol: string;
   tokenOutAddress: string;
   tokenOutAmountGross: string;
+  tokenInSymbol: string;
+  tokenInAddress: string;
+  tokenInAmountGross: string;
   receiverAddress: string;
   receiverEnsPrimaryName: string;
   receiverYodlConfig: ReceiverYodlConfig;
