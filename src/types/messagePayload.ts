@@ -59,20 +59,44 @@ export interface SiweResponseData {
   address: string;
 }
 
+export interface Webhook {
+  /** Ethereum address */
+  webhookAddress: string;
+  /** Optional payload data (will be converted to hex bytes) */
+  payload?: string;
+}
+
 /**
  * Payment request configuration
  *
  * @example
  * ```typescript
- * const payment: PaymentConfig = {
+ * const payment: PaymentRequestData = {
  *   addressOrEns: '0x1234567890123456789012345678901234567890',
  *   amount: 99.99,
  *   currency: FiatCurrency.USD,
  *   memo: 'Premium subscription payment'
  * };
  *
- * const paymentWithoutAmount: PaymentConfig = {
+ * const paymentWithoutAmount: PaymentRequestData = {
  *   addressOrEns: '0x1234567890123456789012345678901234567890',
+ * };
+ *
+ * const paymentWithWebhooks: PaymentRequestData = {
+ *   addressOrEns: '0x1234567890123456789012345678901234567890',
+ *   amount: 50,
+ *   currency: FiatCurrency.USD,
+ *   memo: 'Service payment with webhooks',
+ *   webhooks: [
+ *     {
+ *       webhookAddress: '0x1234567890123456789012345678901234567890',
+ *       payload: 'payment-notification'
+ *     },
+ *     {
+ *       webhookAddress: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd'
+ *       // Empty payload
+ *     }
+ *   ]
  * };
  * ```
  */
@@ -87,4 +111,6 @@ export interface PaymentRequestData {
   memo?: string;
   /** Payment redirect URL - Required when application runs outside of an iframe */
   redirectUrl?: string;
+  /** Optional webhooks to be called during payment processing */
+  webhooks?: Webhook[];
 }

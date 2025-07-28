@@ -16,6 +16,7 @@ export const URL_PARAMS = {
   REDIRECT_URL: 'redirectUrl',
   STATUS_SUCCESS: 'success',
   STATUS_CANCELLED: 'cancelled',
+  WEBHOOKS: 'webhooks',
 } as const;
 
 export const URL_PARAMS_REQUEST = {
@@ -23,4 +24,5 @@ export const URL_PARAMS_REQUEST = {
   REDIRECT_URL: URL_PARAMS.REDIRECT_URL,
   AMOUNT: 'amount',
   CURRENCY: 'currency',
+  WEBHOOKS: URL_PARAMS.WEBHOOKS,
 } as const;
