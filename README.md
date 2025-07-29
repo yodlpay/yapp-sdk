@@ -149,15 +149,18 @@ export default PaymentExample;
 ### Key Points About Payment Creation
 
 1. **Singleton SDK Instance**
+
    - The SDK is initialized once outside the component as a singleton
    - This allows the same SDK instance to be reused across multiple components
 
 2. **Creating a Payment**
+
    - The `createPayment` function demonstrates how to request a new payment
    - It includes proper error handling for common scenarios (cancellation, timeout)
    - A unique memo/order ID is generated for each payment
 
 3. **Payment States**
+
    - The example tracks loading states, errors, and successful payments
    - It provides appropriate UI feedback for each state
 
@@ -202,6 +205,7 @@ This basic response provides essential information to track the payment on-chain
 The SDK operates in two different modes depending on the environment:
 
 1. **Iframe Mode**
+
    - Used automatically when your Yapp is running inside an iframe
    - Communicates using the postMessage API
    - Doesn't require a redirectUrl
@@ -318,11 +322,13 @@ await sdk.requestPayment('vitalik.eth', config);
 When using ENS names, there are some important considerations:
 
 1. **Resolution Handling**
+
    - ENS resolution happens on the Yodl side
    - If the ENS name cannot be resolved, the error `ENS name not found: [name]` will be thrown
    - Always handle this error appropriately in your application
 
 2. **Performance Implications**
+
    - ENS resolution adds a small delay to the payment process
    - For performance-sensitive applications, consider resolving ENS names in advance and using the resulting address
 
@@ -497,17 +503,20 @@ try {
 ## 🔒 Security Best Practices
 
 1. **Origin Security**
+
    - Use HTTPS in production
    - Validate message origins in iframe mode
    - Set appropriate Content Security Policy (CSP) headers
 
 2. **Payment Handling**
+
    - Store `memo` values securely
    - Implement proper error handling
    - Use timeouts appropriately (default: 5 minutes)
    - Validate the returned payment parameters to prevent spoofing
 
 3. **Session Storage Considerations**
+
    - The SDK uses session storage to maintain payment state during redirects
    - This data is automatically cleared after payment completion or timeout
    - Consider implementing additional cleanup mechanisms for abandoned flows
