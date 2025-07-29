@@ -329,7 +329,13 @@ export class PaymentManager extends CommunicationManager {
     // Handle webhooks
     if (message.payload.webhooks && message.payload.webhooks.length > 0) {
       const webhookParam = message.payload.webhooks
-        .map((webhook) => `${webhook.webhookAddress}:${webhook.payload || ''}`)
+        .map((webhook) => {
+          if (webhook.payload) {
+            return `${webhook.webhookAddress}:${webhook.payload}`;
+          }
+
+          return webhook.webhookAddress;
+        })
         .join(',');
       paymentUrl.searchParams.set(URL_PARAMS_REQUEST.WEBHOOKS, webhookParam);
     }
