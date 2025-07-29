@@ -93,7 +93,10 @@ export class PaymentManager extends CommunicationManager {
       // Validate webhooks
       if (paymentData.webhooks) {
         for (const webhook of paymentData.webhooks) {
-          if (!webhook.webhookAddress || typeof webhook.webhookAddress !== 'string') {
+          if (
+            !webhook.webhookAddress ||
+            typeof webhook.webhookAddress !== 'string'
+          ) {
             reject(new Error('Webhook address must be a non-empty string'));
             return;
           }
@@ -326,7 +329,7 @@ export class PaymentManager extends CommunicationManager {
     // Handle webhooks
     if (message.payload.webhooks && message.payload.webhooks.length > 0) {
       const webhookParam = message.payload.webhooks
-        .map(webhook => `${webhook.webhookAddress}:${webhook.payload || ''}`)
+        .map((webhook) => `${webhook.webhookAddress}:${webhook.payload || ''}`)
         .join(',');
       paymentUrl.searchParams.set(URL_PARAMS_REQUEST.WEBHOOKS, webhookParam);
     }
