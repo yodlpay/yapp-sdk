@@ -90,6 +90,24 @@ export class PaymentManager extends CommunicationManager {
         return;
       }
 
+      // Validate webhooks
+      if (paymentData.webhooks) {
+        for (const webhook of paymentData.webhooks) {
+          if (
+            !webhook.webhookAddress ||
+            typeof webhook.webhookAddress !== 'string'
+          ) {
+            reject(new Error('Webhook address must be a non-empty string'));
+            return;
+          }
+
+          if (webhook.payload && typeof webhook.payload !== 'string') {
+            reject(new Error('Webhook payload must be a string'));
+            return;
+          }
+        }
+      }
+
       const message = createRequestMessage('PAYMENT_REQUEST', paymentData);
 
       // Check if running in iframe
@@ -306,6 +324,20 @@ export class PaymentManager extends CommunicationManager {
         URL_PARAMS_REQUEST.CURRENCY,
         message.payload.currency,
       );
+    }
+
+    // Handle webhooks
+    if (message.payload.webhooks && message.payload.webhooks.length > 0) {
+      const webhookParam = message.payload.webhooks
+        .map((webhook) => {
+          if (webhook.payload) {
+            return `${webhook.webhookAddress}:${webhook.payload}`;
+          }
+
+          return webhook.webhookAddress;
+        })
+        .join(',');
+      paymentUrl.searchParams.set(URL_PARAMS_REQUEST.WEBHOOKS, webhookParam);
     }
 
     // Navigate to the payment URL
